@@ -7,10 +7,7 @@ import moe.caa.multilogin.logger.Logger;
 import java.io.*;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.URLEncoder;
+import java.net.*;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -28,9 +25,14 @@ import java.util.stream.Collectors;
  * 插件内 ‘JarFile’ 文件加载器
  */
 public class PluginLoader {
+
+    // 内嵌 jar 包的文件名
     private static final String NEST_JAR_NAME = "MultiLogin-Core.JarFile";
 
+    // 依赖文件夹
     private final File librariesFolder;
+
+    // 临时目录文件夹
     private final File tempLibrariesFolder;
 
     /**
@@ -47,7 +49,8 @@ public class PluginLoader {
      */
     private List<Library> getNeedDownloadLibraries() {
         List<Library> ret = new ArrayList<>();
-        // 首先遍历relocate工具包
+        // 首先遍历 relocate 工具包
+        // 服务端可能会自带老版本的 relocate 工具包，将会报错，强制载入。
         for (Library library : Library.getLibraryMap().get(0)) {
             File libraryFile = new File(librariesFolder, library.getFileName());
             if (libraryFile.exists() && libraryFile.length() != 0) {
@@ -59,6 +62,7 @@ public class PluginLoader {
             ret.add(library);
         }
 
+        // 这是运行时依赖，受到 relocate 影响
         for (Library library : Library.getLibraryMap().get(1)) {
             if (library.isLoaded(null)) continue;
             File libraryFile = new File(librariesFolder, library.getFileName());
@@ -165,6 +169,8 @@ public class PluginLoader {
         }
 
         urls.add(fbt.toURI().toURL());
+
+        ClassLoader loader = new URLClassLoader(urls.toArray(new URL[0]), getClass().getClassLoader());
     }
 
     /**
@@ -210,11 +216,13 @@ public class PluginLoader {
      * @param out 目标文件
      */
     private void downloadFile(String url, File out) throws IOException, URISyntaxException, InterruptedException {
+        url = urlEncode(url);
+        Logger.LoggerProvider.getLogger().debug("Downloading file: " + url);
         if (out.exists() && !out.delete()) throw new IOException("Unable to delete file: " + out.getAbsolutePath());
         File temp = new File(tempLibrariesFolder, "MultiLogin-" + out.getName() + ".downloading");
         final HttpClient client = HttpClient.newHttpClient();
         HttpResponse.BodyHandler<Path> handler = HttpResponse.BodyHandlers.ofFile(temp.toPath());
-        HttpRequest request = HttpRequest.newBuilder().uri(new URI(urlEncode(url))).build();
+        HttpRequest request = HttpRequest.newBuilder().uri(new URI(url)).build();
         final HttpResponse<Path> send = client.send(request, handler);
         final int responseCode = send.statusCode();
         if (responseCode != 200)
