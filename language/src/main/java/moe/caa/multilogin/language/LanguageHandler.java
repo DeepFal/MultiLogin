@@ -25,6 +25,7 @@ public class LanguageHandler {
      * 初始化这个处理程序
      */
     public void init(String name) throws IOException {
+        inside = new Properties();
         inside.load(new InputStreamReader(Objects.requireNonNull(getClass().getResourceAsStream("/" + name)), StandardCharsets.UTF_8));
     }
 
@@ -39,7 +40,7 @@ public class LanguageHandler {
             throw new OutsideMessageLoadException(outsideFile.getAbsolutePath(), e);
         }
         for (Map.Entry<Object, Object> entry : inside.entrySet()) {
-            if (!outside.containsKey(entry.getKey())) break;
+            if (outside.containsKey(entry.getKey())) break;
             Logger.LoggerProvider.getLogger().warn("Message content is missing at node " + entry.getKey());
         }
         Logger.LoggerProvider.getLogger().info("Loaded file: " + outsideFile.getName());
