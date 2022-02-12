@@ -1,0 +1,93 @@
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
+import java.security.MessageDigest
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.atomic.AtomicBoolean
+
+dependencies {
+    implementation project(":logger")
+
+    def scanner = new Scanner(file("../libraries"))
+    while (scanner.hasNextLine()) {
+        def args = scanner.nextLine().split("\\s+")
+        // loader 模块只需要依赖编号为 ‘0’ 的库
+        if (args[0] != '0') continue
+        compileOnly(group: args[1], name: args[2], version: args[3])
+    }
+    scanner.close()
+}
+
+/*
+ * 读取 ‘../libraries’ 下的依赖项，联网下载并计算依赖的 sha256 值
+ * 替换文件中的占位 ‘{0}’ 为计算好的 sha256 值，覆盖至 ‘src/main/resources/libraries’ 文件中去
+ */
+task regenerateDependencyDetails {
+    if (true) return
+    def client = HttpClient.newHttpClient()
+    def handler = HttpResponse.BodyHandlers.ofByteArray()
+    try (
+            // 需要保证行顺序
+            def fileReader = new FileReader(file("../libraries"))
+            def reader = new LineNumberReader(fileReader)
+            def fw = new FileWriter(file("src/main/resources/libraries"))
+    ) {
+        // 用于 fw 在覆盖时不留空行
+        def flag = new AtomicBoolean(false)
+        reader.lines().map(s -> {
+            def args = s.split("\\s+")
+            def request = HttpRequest.newBuilder().uri(new URI(getLibraryUrl(args))).build()
+            def send = client.sendAsync(request, handler)
+            // 返回两个对象，第一个为原始的行内容，第二个为依赖下载缓存
+            return new Object[]{s, send}
+        }).map(os -> {
+            def bytes = (os[1] as CompletableFuture<HttpResponse<byte[]>>).get().body()
+            def sha256 = byteToHex(MessageDigest.getInstance("SHA-256").digest(bytes))
+            // 返回替换好后的行
+            return (os[0] as String).replace("{0}", sha256)
+        }).forEach(s -> {
+            if (flag.getAndSet(true))
+                fw.write('\n')
+            // 书写至目标文件
+            fw.write(s)
+        })
+        fw.flush()
+    }
+}
+
+/*
+ * 读取 ‘../libraries’ 下的每一行，以 ‘\\s+’ 分割，生成依赖下载链接
+ */
+
+static def getLibraryUrl(String[] args) {
+    def sb = new StringBuilder()
+    sb.append(args.length == 9 ? args[8] : "https://repo1.maven.org/maven2")
+    sb.append('/')
+    sb.append(args[1].replace(".", "/"))
+    sb.append('/')
+    sb.append(args[2])
+    sb.append('/')
+    sb.append(args[3])
+    sb.append('/')
+    sb.append(args[2])
+    sb.append('-')
+    sb.append(args[3])
+    sb.append(".jar")
+    sb.toString()
+}
+
+/*
+ * byte 数组转 16 进制
+ */
+
+static def byteToHex(byte[] bytes) {
+    def sb = new StringBuilder();
+    for (def i = 0; i < bytes.length; i++) {
+        def temp = Integer.toHexString((bytes[i] & 0xFF) as Integer);
+        if (temp.length() == 1) {
+            sb.append("0");
+        }
+        sb.append(temp);
+    }
+    sb.toString()
+}

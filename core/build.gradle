@@ -1,0 +1,30 @@
+plugins {
+    id 'com.github.johnrengelman.shadow' version '7.0.0'
+}
+
+dependencies {
+    implementation project(":logger")
+
+    def scanner = new Scanner(file("../libraries"))
+    while (scanner.hasNextLine()) {
+        def args = scanner.nextLine().split("\\s+")
+        if (args[0] != '1') continue
+        compileOnly group: args[1], name: args[2], version: args[3]
+    }
+    scanner.close()
+}
+
+shadowJar {
+    archiveFileName = 'MultiLogin-Core.JarFile'
+
+    def scanner = new Scanner(file("../libraries"))
+    while (scanner.hasNextLine()) {
+        def args = scanner.nextLine().split("\\s+")
+        if (args[7] != '1') continue;
+        relocate args[5], 'moe.caa.multilogin.lib.' + args[5] as String
+    }
+}
+
+artifacts {
+    archives shadowJar
+}

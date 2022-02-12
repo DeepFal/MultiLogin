@@ -1,0 +1,6 @@
+rootProject.name = 'MultiLogin'
+include 'core'
+include 'loader'
+include 'logger'
+include 'velocity'
+
