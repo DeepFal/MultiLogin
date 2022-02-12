@@ -4,3 +4,5 @@ include 'core'
 include 'loader'
 include 'logger'
 include 'velocity'
+include 'language'
+
