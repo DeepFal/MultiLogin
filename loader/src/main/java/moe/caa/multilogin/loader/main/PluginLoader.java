@@ -90,6 +90,7 @@ public class PluginLoader {
 
         for (Library library : Library.getLibraryMap().get(0)) {
             urls.add(new File(librariesFolder, library.getFileName()).toURI().toURL());
+            pagName.add(library.getPagName());
         }
 
         final PriorURLClassLoader loader = new PriorURLClassLoader(urls.toArray(new URL[0]), getClass().getClassLoader(), pagName);
@@ -164,9 +165,6 @@ public class PluginLoader {
         }
 
         urls.add(fbt.toURI().toURL());
-        for (URL url : urls) {
-            System.out.println(url);
-        }
     }
 
     /**

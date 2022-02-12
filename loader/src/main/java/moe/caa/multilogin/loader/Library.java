@@ -67,7 +67,7 @@ public class Library {
     private String name;
     private String version;
     private String sha256;
-    private String lPackage;
+    private String pagName;
     private String mainClass;
     private boolean relocated;
     private String specifiedMaven;
@@ -147,7 +147,7 @@ public class Library {
     public Map<String, String> getRelocateRules() {
         Map<String, String> ret = new HashMap<>();
         if (relocated) {
-            ret.put(lPackage, String.format(packageRelocate, lPackage));
+            ret.put(pagName, String.format(packageRelocate, pagName));
         }
         return ret;
     }
