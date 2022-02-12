@@ -3,7 +3,9 @@ plugins {
 }
 
 dependencies {
-    implementation project(":logger")
+    compileOnly project(":api")
+    compileOnly project(":logger")
+    compileOnly project(":language")
 
     def scanner = new Scanner(file("../libraries"))
     while (scanner.hasNextLine()) {
