@@ -1,27 +1,29 @@
 package moe.caa.multilogin.logger;
 
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import moe.caa.multilogin.logger.bridges.BaseLoggerBridge;
 
 import java.io.File;
 
 /**
- * MultiLogin 日志记录程序
+ * MultiLogin 日志记录程序（单例）
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+@Getter
+@Setter
 public class MultiLoginLogger implements Logger {
-    private final File loggerFolder;
-    private final BaseLoggerBridge loggerBridge;
+    @Getter
+    private static final MultiLoginLogger instance = new MultiLoginLogger();
+
+    private File loggerFolder;
+    private BaseLoggerBridge loggerBridge;
     private FileLoggerWriteHandler fileLoggerWriteHandler;
 
-    /**
-     * 构建这个日志记录程序
-     */
-    public MultiLoginLogger(BaseLoggerBridge loggerBridge, File loggerFolder) {
-        LoggerProvider.setLogger(this);
-        this.loggerFolder = loggerFolder;
-        this.loggerBridge = loggerBridge;
-    }
-
-    public static boolean canInit() {
+    public boolean canInit() {
+        if (loggerBridge == null || loggerFolder == null) return false;
         try {
             Class.forName("org.apache.logging.log4j.core.LoggerContext");
             return true;
@@ -52,6 +54,7 @@ public class MultiLoginLogger implements Logger {
     }
 
     public synchronized void terminate() {
+        Logger.LoggerProvider.setLogger(loggerBridge);
         if (fileLoggerWriteHandler != null) fileLoggerWriteHandler.terminate();
         fileLoggerWriteHandler = null;
     }

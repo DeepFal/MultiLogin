@@ -6,6 +6,7 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicBoolean
 
 dependencies {
+    implementation project(":api")
     implementation project(":logger")
     implementation project(":language")
 
@@ -44,6 +45,7 @@ task regenerateDependencyDetails {
         }).map(os -> {
             def bytes = (os[1] as CompletableFuture<HttpResponse<byte[]>>).get().body()
             def sha256 = byteToHex(MessageDigest.getInstance("SHA-256").digest(bytes))
+            System.out.println("Sha256 -> " + sha256 as String)
             // 返回替换好后的行
             return (os[0] as String).replace("{0}", sha256)
         }).forEach(s -> {

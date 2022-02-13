@@ -29,6 +29,11 @@ public interface IServer {
     boolean isWhitelist();
 
     /**
+     * 返回是否已开启最基本的 UUID 穿透功能
+     */
+    boolean isForwarded();
+
+    /**
      * 获得服务器核心名称
      *
      * @return 服务器核心名称

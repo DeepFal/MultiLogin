@@ -1,11 +1,13 @@
-0 org.ow2.asm              asm                  9.2     b9d4fe4d71938df38839f0eca42aaaa64cf8b313d678da036f0cb3ca199b47f5 org.objectweb.asm        org.objectweb.asm.commons.Method            0
-0 org.ow2.asm              asm-commons          9.2     be4ce53138a238bb522cd781cf91f3ba5ce2f6ca93ec62d46a162a127225e0a6 org.objectweb.asm        org.objectweb.asm.Type                      0
-0 me.lucko                 jar-relocator        1.5     d03e9e33df602a911814d0f27609eda370dfd3281919d455ab2e5a86d8f4a08b me.lucko.jarrelocator    me.lucko.jarrelocator.JarRelocator          0
-1 org.slf4j                slf4j-api            1.7.30  cdba07964d1bb40a0761485c6b1e8c2f8fd9eb1d19c53928ac0d7f9510105c57 org.slf4j                org.slf4j.LoggerFactory                     0
-1 org.apache.logging.log4j log4j-core           2.17.0  65c33dc9b24a5e5f6cacae62680641582894749c7bf16c951032ef92f3e12a60 org.apache.logging.log4j org.apache.logging.log4j.core.LoggerContext 0
-1 org.apache.logging.log4j log4j-api            2.17.0  ab9cadc80e234580e3f3c8c18644314fccd4b3cd3f7085d4e934866cb561b95d org.apache.logging.log4j org.apache.logging.log4j.Level              0
-1 com.zaxxer               HikariCP             5.0.1   26d492397e6775b4296737a8919bf04047afe5827fdd2c08b4557595436b3a2b com.zaxxer.hikari        com.zaxxer.hikari.HikariDataSource          1
-1 mysql                    mysql-connector-java 8.0.25  a0a1be0389e541dad8841b326e79c51d39abbe1ca52267304d76d1cf4801ce96 com.mysql                com.mysql.cj.jdbc.MysqlDataSource           1
-1 com.h2database           h2                   2.0.206 3b9607c5673fd8b87e49e3ac46bd88fd3561e863dce673a35234e8b5708f3deb org.h2                   org.h2.jdbcx.JdbcConnectionPool             0
-1 com.google.code.gson     gson                 2.8.9   d3999291855de495c94c743761b8ab5176cfeabe281a5ab0d8e8d45326fd703e com.google.gson          com.google.gson.Gson                        1
-1 com.mojang               brigadier            1.0.18  edc4926aa4b49010f6e7ac46efd623fb38f9517344d26f6251d79a26a9738c0b com.mojang.brigadier     com.mojang.brigadier                        1 https://libraries.minecraft.net
+0 org.ow2.asm              asm                  9.2     b9d4fe4d71938df38839f0eca42aaaa64cf8b313d678da036f0cb3ca199b47f5 org.objectweb.asm             org.objectweb.asm.commons.Method                             0
+0 org.ow2.asm              asm-commons          9.2     be4ce53138a238bb522cd781cf91f3ba5ce2f6ca93ec62d46a162a127225e0a6 org.objectweb.asm             org.objectweb.asm.Type                                       0
+0 me.lucko                 jar-relocator        1.5     d03e9e33df602a911814d0f27609eda370dfd3281919d455ab2e5a86d8f4a08b me.lucko.jarrelocator         me.lucko.jarrelocator.JarRelocator                           0
+1 org.slf4j                slf4j-api            1.7.30  cdba07964d1bb40a0761485c6b1e8c2f8fd9eb1d19c53928ac0d7f9510105c57 org.slf4j                     org.slf4j.LoggerFactory                                      0
+1 org.apache.logging.log4j log4j-core           2.17.0  65c33dc9b24a5e5f6cacae62680641582894749c7bf16c951032ef92f3e12a60 org.apache.logging.log4j      org.apache.logging.log4j.core.LoggerContext                  0
+1 org.apache.logging.log4j log4j-api            2.17.0  ab9cadc80e234580e3f3c8c18644314fccd4b3cd3f7085d4e934866cb561b95d org.apache.logging.log4j      org.apache.logging.log4j.Level                               0
+1 com.zaxxer               HikariCP             5.0.1   26d492397e6775b4296737a8919bf04047afe5827fdd2c08b4557595436b3a2b com.zaxxer.hikari             com.zaxxer.hikari.HikariDataSource                           1
+1 mysql                    mysql-connector-java 8.0.25  a0a1be0389e541dad8841b326e79c51d39abbe1ca52267304d76d1cf4801ce96 com.mysql                     com.mysql.cj.jdbc.MysqlDataSource                            1
+1 com.h2database           h2                   2.0.206 3b9607c5673fd8b87e49e3ac46bd88fd3561e863dce673a35234e8b5708f3deb org.h2                        org.h2.jdbcx.JdbcConnectionPool                              0
+1 com.google.code.gson     gson                 2.8.9   d3999291855de495c94c743761b8ab5176cfeabe281a5ab0d8e8d45326fd703e com.google.gson               com.google.gson.Gson                                         1
+1 org.spongepowered        configurate-hocon    4.0.0   b615ba09e0406f9bc3969f78c3257bf4527f19df6555f44c6c352934ed4f6629 org.spongepowered.configurate org.spongepowered.configurate.hocon.HoconConfigurationLoader 1
+1 org.spongepowered        configurate-core     4.0.0   00be46a93c296bf97bcf3bb5d6f6b681ce2b5c325a21c5d42951a60191f08812 org.spongepowered.configurate org.spongepowered.configurate.CommentedConfigurationNode     1
+1 com.mojang               brigadier            1.0.18  edc4926aa4b49010f6e7ac46efd623fb38f9517344d26f6251d79a26a9738c0b com.mojang.brigadier          com.mojang.brigadier                                         1 https://libraries.minecraft.net

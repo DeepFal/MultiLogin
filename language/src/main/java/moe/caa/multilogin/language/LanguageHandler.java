@@ -1,5 +1,7 @@
 package moe.caa.multilogin.language;
 
+import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import moe.caa.multilogin.logger.Logger;
 
@@ -13,10 +15,13 @@ import java.util.Objects;
 import java.util.Properties;
 
 /**
- * 代表信息文本处理程序
+ * 代表信息文本处理程序（单例）
  */
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class LanguageHandler {
+    @Getter
+    private static final LanguageHandler instance = new LanguageHandler();
+
     private Properties inside;
     private Properties outside;
     private boolean useOutside = false;
@@ -24,7 +29,8 @@ public class LanguageHandler {
     /**
      * 初始化这个处理程序
      */
-    public void init(String name) throws IOException {
+    public synchronized void init(String name) throws IOException {
+        if (inside != null) return;
         inside = new Properties();
         inside.load(new InputStreamReader(Objects.requireNonNull(getClass().getResourceAsStream("/" + name)), StandardCharsets.UTF_8));
     }

@@ -32,11 +32,6 @@ public interface IPlayerManager {
     Set<IPlayer> getOnlinePlayers();
 
     /**
-     * 返回是否已开启最基本的 UUID 穿透功能
-     */
-    boolean isForwarded();
-
-    /**
      * 踢出玩家，如果这名玩家存在的话
      *
      * @param name    玩家名称

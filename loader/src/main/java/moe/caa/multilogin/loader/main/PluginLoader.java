@@ -1,5 +1,8 @@
 package moe.caa.multilogin.loader.main;
 
+import lombok.Getter;
+import moe.caa.multilogin.api.MultiLoginAPI;
+import moe.caa.multilogin.api.plugin.IPlugin;
 import moe.caa.multilogin.loader.Library;
 import moe.caa.multilogin.loader.PriorURLClassLoader;
 import moe.caa.multilogin.logger.Logger;
@@ -7,6 +10,7 @@ import moe.caa.multilogin.logger.Logger;
 import java.io.*;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
+import java.lang.reflect.Constructor;
 import java.net.*;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -35,6 +39,9 @@ public class PluginLoader {
     // 临时目录文件夹
     private final File tempLibrariesFolder;
 
+    @Getter
+    private URLClassLoader pluginClassLoader;
+
     /**
      * @param librariesFolder     依赖文件夹
      * @param tempLibrariesFolder 临时目录文件夹
@@ -42,6 +49,13 @@ public class PluginLoader {
     public PluginLoader(File librariesFolder, File tempLibrariesFolder) {
         this.librariesFolder = librariesFolder;
         this.tempLibrariesFolder = tempLibrariesFolder;
+    }
+
+    /**
+     * 关闭
+     */
+    public void close() throws IOException {
+        pluginClassLoader.close();
     }
 
     /**
@@ -141,7 +155,7 @@ public class PluginLoader {
     /**
      * 开始加载
      */
-    public void load() throws Throwable {
+    public MultiLoginAPI load(IPlugin plugin) throws Throwable {
         Logger.LoggerProvider.getLogger().info("Loading libraries...");
         generateFolder();
         // 需要下载的依赖项
@@ -170,7 +184,11 @@ public class PluginLoader {
 
         urls.add(fbt.toURI().toURL());
 
-        ClassLoader loader = new URLClassLoader(urls.toArray(new URL[0]), getClass().getClassLoader());
+        pluginClassLoader = new URLClassLoader(urls.toArray(new URL[0]), getClass().getClassLoader());
+
+        Class<?> coreMain = Class.forName("moe.caa.multilogin.core.main.MultiCore", true, pluginClassLoader);
+        final Constructor<?> constructor = coreMain.getConstructor(IPlugin.class);
+        return (MultiLoginAPI) constructor.newInstance(plugin);
     }
 
     /**
