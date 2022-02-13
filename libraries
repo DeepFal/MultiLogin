@@ -1,11 +1,13 @@
-0 org.ow2.asm              asm                  9.2     {0} org.objectweb.asm        org.objectweb.asm.commons.Method            0
-0 org.ow2.asm              asm-commons          9.2     {0} org.objectweb.asm        org.objectweb.asm.Type                      0
-0 me.lucko                 jar-relocator        1.5     {0} me.lucko.jarrelocator    me.lucko.jarrelocator.JarRelocator          0
-1 org.slf4j                slf4j-api            1.7.30  {0} org.slf4j                org.slf4j.LoggerFactory                     0
-1 org.apache.logging.log4j log4j-core           2.17.0  {0} org.apache.logging.log4j org.apache.logging.log4j.core.LoggerContext 0
-1 org.apache.logging.log4j log4j-api            2.17.0  {0} org.apache.logging.log4j org.apache.logging.log4j.Level              0
-1 com.zaxxer               HikariCP             5.0.1   {0} com.zaxxer.hikari        com.zaxxer.hikari.HikariDataSource          1
-1 mysql                    mysql-connector-java 8.0.25  {0} com.mysql                com.mysql.cj.jdbc.MysqlDataSource           1
-1 com.h2database           h2                   2.0.206 {0} org.h2                   org.h2.jdbcx.JdbcConnectionPool             0
-1 com.google.code.gson     gson                 2.8.9   {0} com.google.gson          com.google.gson.Gson                        1
-1 com.mojang               brigadier            1.0.18  {0} com.mojang.brigadier     com.mojang.brigadier                        1 https://libraries.minecraft.net
+0 org.ow2.asm              asm                  9.2     {0} org.objectweb.asm             org.objectweb.asm.commons.Method                             0
+0 org.ow2.asm              asm-commons          9.2     {0} org.objectweb.asm             org.objectweb.asm.Type                                       0
+0 me.lucko                 jar-relocator        1.5     {0} me.lucko.jarrelocator         me.lucko.jarrelocator.JarRelocator                           0
+1 org.slf4j                slf4j-api            1.7.30  {0} org.slf4j                     org.slf4j.LoggerFactory                                      0
+1 org.apache.logging.log4j log4j-core           2.17.0  {0} org.apache.logging.log4j      org.apache.logging.log4j.core.LoggerContext                  0
+1 org.apache.logging.log4j log4j-api            2.17.0  {0} org.apache.logging.log4j      org.apache.logging.log4j.Level                               0
+1 com.zaxxer               HikariCP             5.0.1   {0} com.zaxxer.hikari             com.zaxxer.hikari.HikariDataSource                           1
+1 mysql                    mysql-connector-java 8.0.25  {0} com.mysql                     com.mysql.cj.jdbc.MysqlDataSource                            1
+1 com.h2database           h2                   2.0.206 {0} org.h2                        org.h2.jdbcx.JdbcConnectionPool                              0
+1 com.google.code.gson     gson                 2.8.9   {0} com.google.gson               com.google.gson.Gson                                         1
+1 org.spongepowered        configurate-hocon    4.0.0   {0} org.spongepowered.configurate org.spongepowered.configurate.hocon.HoconConfigurationLoader 1
+1 org.spongepowered        configurate-core     4.0.0   {0} org.spongepowered.configurate org.spongepowered.configurate.CommentedConfigurationNode     1
+1 com.mojang               brigadier            1.0.18  {0} com.mojang.brigadier          com.mojang.brigadier                                         1 https://libraries.minecraft.net
