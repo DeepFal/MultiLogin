@@ -38,10 +38,10 @@ jobs:
         run: |
           rm -f ~/.gradle/caches/modules-2/modules-2.lock
           rm -f ~/.gradle/caches/modules-2/gc.properties
-
-      - name: Upload to artifact respectively
-        uses: MuirProject/upload-artifact@v2-beta
-        with:
-          name: '["Velocity"]'
-          path: '["velocity/loader/build/libs/MultiLogin-*.jar"]'
-          retention-days: 1
+#
+#      - name: Upload to artifact respectively
+#        uses: MuirProject/upload-artifact@v2-beta
+#        with:
+#          name: '["Velocity"]'
+#          path: '["velocity/build/libs/MultiLogin-*.jar"]'
+#          retention-days: 1

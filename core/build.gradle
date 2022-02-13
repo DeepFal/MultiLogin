@@ -7,8 +7,6 @@ dependencies {
     compileOnly project(":logger")
     compileOnly project(":language")
 
-    implementation "org.spongepowered:configurate-hocon:4.0.0"
-
     def scanner = new Scanner(file("../libraries"))
     while (scanner.hasNextLine()) {
         def args = scanner.nextLine().split("\\s+")
