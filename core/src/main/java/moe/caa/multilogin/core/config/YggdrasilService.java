@@ -4,6 +4,9 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
+import moe.caa.multilogin.core.auth.yggdrasil.HasJoinedContext;
+import moe.caa.multilogin.core.util.FormatContent;
+import moe.caa.multilogin.core.util.ValueUtil;
 import org.spongepowered.configurate.CommentedConfigurationNode;
 import org.spongepowered.configurate.serialize.SerializationException;
 
@@ -81,5 +84,38 @@ public class YggdrasilService {
                 url, postMode, passIp, ipContent, postContent,
                 transformUuid, transformRepeatAdjust, nameAllowedRegular, whitelist, refuseRepeatedLogin, authRetry,
                 restorer, method, retry);
+    }
+
+    /**
+     * 构建请求 URL
+     */
+    public String buildUrl(HasJoinedContext context) {
+        return FormatContent.createContent(
+                FormatContent.FormatEntry.builder().name("username").content(context.getUsername()).build(),
+                FormatContent.FormatEntry.builder().name("serverId").content(context.getServerId()).build(),
+                FormatContent.FormatEntry.builder().name("ip").content(passIp ? buildIpContent(context.getIp()) : "").build()
+        ).format(url);
+    }
+
+    /**
+     * 构建 ip 信息内容
+     */
+    private String buildIpContent(String ip) {
+        if (ValueUtil.isEmpty(ipContent)) return "";
+        return FormatContent.createContent(
+                FormatContent.FormatEntry.builder().name("ip").content(ip).build()
+        ).format(ipContent);
+    }
+
+    /**
+     * 构建 POST 请求数据
+     */
+    public String buildPostContent(HasJoinedContext context) {
+        if (!postMode) return "";
+        return FormatContent.createContent(
+                FormatContent.FormatEntry.builder().name("username").content(context.getUsername()).build(),
+                FormatContent.FormatEntry.builder().name("serverId").content(context.getServerId()).build(),
+                FormatContent.FormatEntry.builder().name("ip").content(passIp ? buildIpContent(context.getIp()) : "").build()
+        ).format(postContent);
     }
 }

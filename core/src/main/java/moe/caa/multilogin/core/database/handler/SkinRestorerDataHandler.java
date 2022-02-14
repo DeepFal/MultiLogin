@@ -1,7 +1,7 @@
 package moe.caa.multilogin.core.database.handler;
 
-import moe.caa.multilogin.core.Pair;
 import moe.caa.multilogin.core.database.SQLManager;
+import moe.caa.multilogin.core.util.Pair;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -94,10 +94,9 @@ public class SkinRestorerDataHandler {
      */
     public int removeAllSkinRestorerData() throws SQLException {
         try (Connection connection = sqlManager.getPool().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(
-                     String.format("DELETE FROM %s",
-                             SQLManager.getUserDataTableName()
-                     ))) {
+             PreparedStatement preparedStatement = connection.prepareStatement("TRUNCATE TABLE " +
+                     SQLManager.getUserDataTableName()
+             )) {
             return preparedStatement.executeUpdate();
         }
     }

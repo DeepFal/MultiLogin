@@ -1,7 +1,7 @@
 package moe.caa.multilogin.core.database.handler;
 
-import moe.caa.multilogin.core.ValueUtil;
 import moe.caa.multilogin.core.database.SQLManager;
+import moe.caa.multilogin.core.util.ValueUtil;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;

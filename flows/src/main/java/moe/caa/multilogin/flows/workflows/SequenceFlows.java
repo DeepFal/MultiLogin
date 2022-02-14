@@ -10,21 +10,21 @@ import java.util.List;
 /**
  * 代表顺序流
  */
-public class SequenceFlows<T> implements IFlows<T> {
+public class SequenceFlows<C extends FlowContext> implements IFlows<C> {
     @Getter
-    private final List<IFlows<T>> steps;
+    private final List<IFlows<C>> steps;
 
     public SequenceFlows() {
         this(new ArrayList<>());
     }
 
-    public SequenceFlows(List<IFlows<T>> steps) {
+    public SequenceFlows(List<IFlows<C>> steps) {
         this.steps = (steps);
     }
 
     @Override
-    public FlowContext<T> run(FlowContext<T> context) {
-        for (IFlows<T> step : steps) {
+    public C run(C context) {
+        for (IFlows<C> step : steps) {
             context = step.run(context);
             // PASS， 继续执行
             if (context.getSignal() == FlowContext.Signal.PASS) continue;

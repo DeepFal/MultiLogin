@@ -201,7 +201,7 @@ public class PluginLoader {
      * @param downloads 需要下载的依赖列表
      */
     private void downloadLibraries(List<Library> downloads) throws InterruptedException, IOException {
-        ParallelFlows<Object> downloadFlows = new ParallelFlows<>();
+        ParallelFlows downloadFlows = new ParallelFlows<>();
         // 存放下载失败的依赖项
         List<Library> failList = Collections.synchronizedList(new ArrayList<>());
 
@@ -218,9 +218,9 @@ public class PluginLoader {
                 }
             }));
         }
-        downloadFlows.run(new FlowContext<>() {
+        downloadFlows.run(new FlowContext() {
             @Override
-            public FlowContext<Object> clone() {
+            public FlowContext clone() {
                 return this;
             }
         });

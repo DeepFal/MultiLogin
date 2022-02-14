@@ -8,13 +8,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * 流上下文
- *
- * @param <V> 零件
+ * 加工上下文
  */
 @Getter
 @ToString
-public abstract class FlowContext<V> {
+public abstract class FlowContext {
     private static final AtomicInteger asyncThreadId = new AtomicInteger(0);
 
     @Getter
@@ -28,17 +26,17 @@ public abstract class FlowContext<V> {
         executorService.shutdown();
     }
 
-    public FlowContext<V> setSignal(Signal signal) {
+    public FlowContext setSignal(Signal signal) {
         this.signal = signal;
         return this;
     }
 
-    public FlowContext<V> setThrowable(Throwable throwable) {
+    public FlowContext setThrowable(Throwable throwable) {
         this.throwable = throwable;
         return this;
     }
 
-    public abstract FlowContext<V> clone();
+    public abstract FlowContext clone();
 
     /**
      * 代表加工信号

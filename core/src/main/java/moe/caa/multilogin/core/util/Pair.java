@@ -1,4 +1,4 @@
-package moe.caa.multilogin.core;
+package moe.caa.multilogin.core.util;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

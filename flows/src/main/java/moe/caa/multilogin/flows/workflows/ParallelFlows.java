@@ -14,34 +14,34 @@ import java.util.concurrent.atomic.AtomicReference;
  * 代表一个并行的车间
  * 所有工序必须全部 PASS
  */
-public class ParallelFlows<T> implements IFlows<T> {
+public class ParallelFlows<C extends FlowContext> implements IFlows<C> {
     @Getter
-    private final List<IFlows<T>> steps;
+    private final List<IFlows<C>> steps;
 
     public ParallelFlows() {
         this(new ArrayList<>());
     }
 
-    public ParallelFlows(List<IFlows<T>> steps) {
+    public ParallelFlows(List<IFlows<C>> steps) {
         this.steps = (steps);
     }
 
     @Override
-    public FlowContext<T> run(FlowContext<T> context) {
+    public C run(C context) {
         // 信号
         CountDownLatch latch = new CountDownLatch(1);
         // 异常信号
-        AtomicReference<IFlows<T>> error = new AtomicReference<>();
+        AtomicReference<IFlows<C>> error = new AtomicReference<>();
         // 存放当前有多少工序加工
-        List<IFlows<T>> currentTasks = Collections.synchronizedList(new ArrayList<>());
+        List<IFlows<C>> currentTasks = Collections.synchronizedList(new ArrayList<>());
         // 避免阻死
         boolean flag = false;
-        for (IFlows<T> step : steps) {
+        for (IFlows<C> step : steps) {
             flag = true;
             currentTasks.add(step);
             FlowContext.getExecutorService().execute(() -> {
                 try {
-                    final FlowContext<T> run = step.run(context);
+                    final FlowContext run = step.run(context);
                     // 这个工序异常
                     if (run.getSignal() == FlowContext.Signal.ERROR) error.set(step);
                     // 这个工序不能完成当前任务，释放信号
