@@ -5,4 +5,5 @@ include 'loader'
 include 'logger'
 include 'velocity'
 include 'language'
+include 'flows'
 
