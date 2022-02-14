@@ -4,6 +4,7 @@ plugins {
 
 dependencies {
     compileOnly project(":api")
+    compileOnly project(":flows")
     compileOnly project(":logger")
     compileOnly project(":language")
 

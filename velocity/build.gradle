@@ -8,6 +8,7 @@ repositories {
 
 dependencies {
     implementation project(":api")
+    implementation project(":flows")
     implementation project(":loader")
     implementation project(":logger")
     implementation project(":language")

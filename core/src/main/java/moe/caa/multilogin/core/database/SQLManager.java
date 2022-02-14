@@ -29,18 +29,19 @@ public class SQLManager {
 
     public SQLManager(MultiCore core) {
         this.core = core;
-        String prefix = core.getConfig().getSqlTablePrefix();
-        prefix = prefix.trim().length() != 0 ? prefix + "_" : "";
-
-        userDataTableName = userDataTableName.replace("{0}", prefix);
-        cacheWhitelistTableName = cacheWhitelistTableName.replace("{0}", prefix);
-        skinRestorerTableName = skinRestorerTableName.replace("{0}", prefix);
     }
 
     /**
      * 初始化和链接数据库
      */
     public void init() throws ClassNotFoundException {
+        String prefix = core.getConfig().getSqlTablePrefix();
+        prefix = prefix.trim().length() != 0 ? prefix + "_" : "";
+
+        userDataTableName = userDataTableName.replace("{0}", prefix);
+        cacheWhitelistTableName = cacheWhitelistTableName.replace("{0}", prefix);
+        skinRestorerTableName = skinRestorerTableName.replace("{0}", prefix);
+
         if (core.getConfig().getSqlBackend() == SQLBackendType.MYSQL) {
             pool = new MysqlConnectionPool(
                     core.getConfig().getSqlIp(),

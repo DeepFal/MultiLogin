@@ -3,6 +3,9 @@ package moe.caa.multilogin.loader.main;
 import lombok.Getter;
 import moe.caa.multilogin.api.MultiLoginAPI;
 import moe.caa.multilogin.api.plugin.IPlugin;
+import moe.caa.multilogin.flows.FlowContext;
+import moe.caa.multilogin.flows.workflows.IFlows;
+import moe.caa.multilogin.flows.workflows.ParallelFlows;
 import moe.caa.multilogin.loader.Library;
 import moe.caa.multilogin.loader.PriorURLClassLoader;
 import moe.caa.multilogin.logger.Logger;
@@ -19,10 +22,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.util.*;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
@@ -118,12 +117,17 @@ public class PluginLoader {
         MethodHandle jarRelocatorConstructor = lookup.unreflectConstructor(jarRelocatorClass.getConstructor(File.class, File.class, Map.class));
         MethodHandle jarRelocator_runMethod = lookup.unreflect(jarRelocatorClass.getMethod("run"));
 
+        Map<String, String> relocateRules = new HashMap<>();
+        for (Library library : needLoad) {
+            relocateRules.putAll(library.getRelocateRules());
+        }
+
         for (Library library : needLoad) {
             File file = new File(librariesFolder, library.getFileName());
             if (library.isRelocated()) {
                 File outFile = File.createTempFile("MultiLogin-", "-" + library.getFileName(), tempLibrariesFolder);
                 outFile.deleteOnExit();
-                Object o = jarRelocatorConstructor.invoke(file, outFile, library.getRelocateRules());
+                Object o = jarRelocatorConstructor.invoke(file, outFile, relocateRules);
                 jarRelocator_runMethod.invoke(o);
                 ret.add(outFile.toURI().toURL());
             } else {
@@ -197,15 +201,12 @@ public class PluginLoader {
      * @param downloads 需要下载的依赖列表
      */
     private void downloadLibraries(List<Library> downloads) throws InterruptedException, IOException {
-        AtomicInteger asyncThreadId = new AtomicInteger(0);
-        ScheduledExecutorService asyncExecutor = Executors.newScheduledThreadPool(5,
-                r -> new Thread(r, "MultiLogin Download #" + asyncThreadId.incrementAndGet()));
+        ParallelFlows<Object> downloadFlows = new ParallelFlows<>();
         // 存放下载失败的依赖项
         List<Library> failList = Collections.synchronizedList(new ArrayList<>());
-        // 线程同步器
-        CountDownLatch latch = new CountDownLatch(downloads.size());
+
         for (Library library : downloads) {
-            asyncExecutor.execute(() -> {
+            downloadFlows.getSteps().add(IFlows.of("Download " + library.getFileName(), objectFlowContext -> {
                 try {
                     File output = new File(librariesFolder, library.getFileName());
                     String libraryUrl = library.getLibraryUrl("https://repo1.maven.org/maven2", false);
@@ -214,13 +215,16 @@ public class PluginLoader {
                 } catch (Throwable throwable) {
                     Logger.LoggerProvider.getLogger().error(throwable);
                     failList.add(library);
-                } finally {
-                    latch.countDown();
                 }
-            });
+            }));
         }
-        latch.await();
-        asyncExecutor.shutdown();
+        downloadFlows.run(new FlowContext<>() {
+            @Override
+            public FlowContext<Object> clone() {
+                return this;
+            }
+        });
+
         if (failList.isEmpty()) return;
         // 抛出依赖下载异常
         throw new IOException("Unable to download missing files: " +

@@ -57,7 +57,8 @@ public class MultiLoginVelocity implements IPlugin {
     }
 
     @Subscribe
-    public void onInitialize(ProxyInitializeEvent event) {
+    public void onInitialize(ProxyInitializeEvent event) throws Throwable {
+        multiLoginAPI.init();
 //        multiLoginAPI.init
     }
 

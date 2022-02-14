@@ -14,14 +14,13 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 @Getter
 @ToString
-public class FlowContext<V> {
+public abstract class FlowContext<V> {
     private static final AtomicInteger asyncThreadId = new AtomicInteger(0);
 
     @Getter
     private static final ExecutorService executorService = Executors.newCachedThreadPool(r ->
             new Thread(r, "MultiLogin Flows #" + asyncThreadId.incrementAndGet())
     );
-    private V value;
     private Throwable throwable;
     private Signal signal = Signal.PASS;
 
@@ -39,15 +38,7 @@ public class FlowContext<V> {
         return this;
     }
 
-    public FlowContext<V> setValue(V value) {
-        this.value = value;
-        return this;
-    }
-
-    public FlowContext<V> clone() {
-        final FlowContext<V> ret = new FlowContext<V>();
-        return ret.setValue(value).setThrowable(throwable).setSignal(signal);
-    }
+    public abstract FlowContext<V> clone();
 
     /**
      * 代表加工信号
