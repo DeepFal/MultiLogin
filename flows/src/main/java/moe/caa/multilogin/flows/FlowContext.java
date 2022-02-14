@@ -19,7 +19,7 @@ public class FlowContext<V> {
 
     @Getter
     private static final ExecutorService executorService = Executors.newCachedThreadPool(r ->
-            new Thread(r, "MultiLogin EntrustFlows #" + asyncThreadId.incrementAndGet())
+            new Thread(r, "MultiLogin Flows #" + asyncThreadId.incrementAndGet())
     );
     private V value;
     private Throwable throwable;
