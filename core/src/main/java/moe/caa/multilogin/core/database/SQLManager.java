@@ -2,10 +2,16 @@ package moe.caa.multilogin.core.database;
 
 import lombok.Getter;
 import moe.caa.multilogin.core.config.SQLBackendType;
+import moe.caa.multilogin.core.database.handler.CacheWhitelistDataHandler;
+import moe.caa.multilogin.core.database.handler.SkinRestorerDataHandler;
+import moe.caa.multilogin.core.database.handler.UserDataHandler;
 import moe.caa.multilogin.core.database.pool.H2ConnectionPool;
 import moe.caa.multilogin.core.database.pool.ISQLConnectionPool;
 import moe.caa.multilogin.core.database.pool.MysqlConnectionPool;
 import moe.caa.multilogin.core.main.MultiCore;
+import moe.caa.multilogin.logger.Logger;
+
+import java.sql.SQLException;
 
 /**
  * 数据库管理类
@@ -23,7 +29,12 @@ public class SQLManager {
 
     @Getter
     private final MultiCore core;
-
+    @Getter
+    private final UserDataHandler userDataHandler = new UserDataHandler(this);
+    @Getter
+    private final SkinRestorerDataHandler skinRestorerDataHandler = new SkinRestorerDataHandler(this);
+    @Getter
+    private final CacheWhitelistDataHandler cacheWhitelistDataHandler = new CacheWhitelistDataHandler(this);
     @Getter
     private ISQLConnectionPool pool;
 
@@ -34,7 +45,7 @@ public class SQLManager {
     /**
      * 初始化和链接数据库
      */
-    public void init() throws ClassNotFoundException {
+    public void init() throws ClassNotFoundException, SQLException {
         String prefix = core.getConfig().getSqlTablePrefix();
         prefix = prefix.trim().length() != 0 ? prefix + "_" : "";
 
@@ -56,5 +67,10 @@ public class SQLManager {
                     core.getConfig().getSqlPassword()
             );
         }
+        Logger.LoggerProvider.getLogger().info(String.format("Using %s database", pool.name()));
+
+        userDataHandler.init();
+        skinRestorerDataHandler.init();
+        cacheWhitelistDataHandler.init();
     }
 }

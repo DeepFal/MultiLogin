@@ -31,13 +31,13 @@ public class UserDataHandler {
 
     public void init() throws SQLException {
         try (Connection connection = sqlManager.getPool().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement("CREATE TABLE IF NOT EXISTS " + SQLManager.getUserDataTableName() + "( " +
+             PreparedStatement preparedStatement = connection.prepareStatement("CREATE TABLE IF NOT EXISTS " + SQLManager.getUserDataTableName() + "(" +
                      fieldOnlineUuid + " BINARY(16) NOT NULL, " +
-                     fieldYggdrasilId + " UNSIGNED TINYINT, " +
+                     fieldYggdrasilId + " TINYINT, " +
                      fieldInGameUuid + " BINARY(16) NOT NULL, " +
                      fieldCurrentUsername + " VARCHAR(32) NOT NULL, " +
                      fieldWhitelist + " BOOL, " +
-                     "PRIMARY KEY(" + fieldOnlineUuid + ", " + fieldYggdrasilId + ")"
+                     "PRIMARY KEY(" + fieldOnlineUuid + ", " + fieldYggdrasilId + "))"
              )) {
             preparedStatement.executeUpdate();
         }
