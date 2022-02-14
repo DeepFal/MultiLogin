@@ -11,7 +11,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 /**
  * 插件配置文件
@@ -21,6 +20,7 @@ import java.util.Map;
 public class PluginConfig {
     private List<YggdrasilService> yggdrasilServices;
     private int servicesTimeOut;
+    private int skinRestorerRetryDelay;
     private boolean globalWhitelist;
     private boolean strictMode;
 
@@ -43,13 +43,14 @@ public class PluginConfig {
         // 读 Yggdrasil 列表
         final CommentedConfigurationNode services = conf.node("yggdrasilServices");
         config.yggdrasilServices = new ArrayList<>();
-        for (Map.Entry<Object, CommentedConfigurationNode> entry : services.childrenMap().entrySet()) {
-            config.yggdrasilServices.add(YggdrasilService.parseConfig(entry.getKey().toString(), entry.getValue()));
+        for (CommentedConfigurationNode node : services.childrenMap().values()) {
+            config.yggdrasilServices.add(YggdrasilService.parseConfig(node));
         }
         config.yggdrasilServices = Collections.unmodifiableList(config.yggdrasilServices);
 
         // 读其他配置
         config.servicesTimeOut = conf.node("servicesTimeOut").getInt(10000);
+        config.skinRestorerRetryDelay = conf.node("skinRestorerRetryDelay").getInt(500);
         config.globalWhitelist = conf.node("globalWhitelist").getBoolean(true);
         config.globalWhitelist = conf.node("strictMode").getBoolean(true);
 

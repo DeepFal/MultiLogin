@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 @ToString
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class YggdrasilService {
-    private final String path;
+    private final int id;
     private final boolean enable;
     private final String name;
 
@@ -43,12 +43,23 @@ public class YggdrasilService {
     /**
      * 通过配置文件对象解析
      */
-    protected static YggdrasilService parseConfig(String path, CommentedConfigurationNode section) throws SerializationException {
+    protected static YggdrasilService parseConfig(CommentedConfigurationNode section) throws SerializationException {
+        int id = section.node("id").getInt(Integer.MIN_VALUE);
+        if (id < 0) {
+            if (id == Integer.MIN_VALUE) {
+                throw new NullPointerException("id is null at " + Arrays.stream(section.node("id").path().array()).map(Object::toString).collect(Collectors.joining(".")));
+            }
+            throw new IllegalArgumentException("id value is negative at " + Arrays.stream(section.node("id").path().array()).map(Object::toString).collect(Collectors.joining(".")));
+        }
+        if (id > 255) {
+            throw new IllegalArgumentException("id value is greater than 255 at " + Arrays.stream(section.node("id").path().array()).map(Object::toString).collect(Collectors.joining(".")));
+        }
+
         boolean enable = section.node("enable").getBoolean(true);
         String name = section.node("name").getString("");
 
         CommentedConfigurationNode body = section.node("body");
-        String url = Objects.requireNonNull(body.node("url").getString(), "Url is null at " + Arrays.stream(body.node("url").path().array()).map(Object::toString).collect(Collectors.joining(".")));
+        String url = Objects.requireNonNull(body.node("url").getString(), "url is null at " + Arrays.stream(body.node("url").path().array()).map(Object::toString).collect(Collectors.joining(".")));
         boolean postMode = body.node("postMode").getBoolean(false);
         boolean passIp = body.node("passIp").getBoolean(false);
         String ipContent = body.node("ipContent").getString("&ip={0}");
@@ -60,13 +71,15 @@ public class YggdrasilService {
         boolean whitelist = section.node("whitelist").getBoolean(false);
         boolean refuseRepeatedLogin = section.node("refuseRepeatedLogin").getBoolean(false);
         int authRetry = section.node("authRetry").getInt(0);
-        SkinRestorerType skinRestorer = section.node("skinRestorer").get(SkinRestorerType.class, SkinRestorerType.OFF);
-        SkinRestorerMethodType skinRestorerMethod = section.node("skinRestorerMethod").get(SkinRestorerMethodType.class, SkinRestorerMethodType.URL);
-        int skinRestorerRetry = section.node("skinRestorerRetry").getInt(2);
 
-        return new YggdrasilService(path, enable, name,
+        CommentedConfigurationNode skinRestorer = section.node("skinRestorer");
+        SkinRestorerType restorer = skinRestorer.node("restorer").get(SkinRestorerType.class, SkinRestorerType.OFF);
+        SkinRestorerMethodType method = skinRestorer.node("method").get(SkinRestorerMethodType.class, SkinRestorerMethodType.URL);
+        int retry = skinRestorer.node("retry").getInt(2);
+
+        return new YggdrasilService(id, enable, name,
                 url, postMode, passIp, ipContent, postContent,
                 transformUuid, transformRepeatAdjust, nameAllowedRegular, whitelist, refuseRepeatedLogin, authRetry,
-                skinRestorer, skinRestorerMethod, skinRestorerRetry);
+                restorer, method, retry);
     }
 }
