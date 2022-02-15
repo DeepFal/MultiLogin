@@ -10,6 +10,9 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * HasJoined 验证上下文
+ */
 @Data
 public class HasJoinedContext {
     private final String username;
