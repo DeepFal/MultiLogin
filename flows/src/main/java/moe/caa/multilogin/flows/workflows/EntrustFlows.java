@@ -1,20 +1,19 @@
 package moe.caa.multilogin.flows.workflows;
 
 import lombok.Getter;
-import moe.caa.multilogin.flows.FlowContext;
 import moe.caa.multilogin.flows.ProcessingFailedException;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 代表一个并行的委托流
  * 所有工序并行尝试加工这个零件，直到有一条工序能顺利完成。
  */
-public class EntrustFlows<C extends FlowContext> implements IFlows<C> {
+public class EntrustFlows<C> extends IFlows<C> {
     @Getter
     private final List<IFlows<C>> steps;
 
@@ -27,11 +26,11 @@ public class EntrustFlows<C extends FlowContext> implements IFlows<C> {
     }
 
     @Override
-    public C run(C context) {
+    public Signal run(C context) {
+        // 存放成功的标志信号
+        AtomicBoolean passed = new AtomicBoolean(false);
         // 信号
         CountDownLatch latch = new CountDownLatch(1);
-        // 存放执行成功的工序
-        AtomicReference<C> passed = new AtomicReference<>();
         // 存放当前有多少工序加工
         List<IFlows<C>> currentTasks = Collections.synchronizedList(new ArrayList<>());
         // 避免阻死
@@ -39,13 +38,12 @@ public class EntrustFlows<C extends FlowContext> implements IFlows<C> {
         for (IFlows<C> step : steps) {
             flag = true;
             currentTasks.add(step);
-            FlowContext.getExecutorService().execute(() -> {
+            IFlows.getExecutorService().execute(() -> {
                 try {
-                    // 工序复制品
-                    final C run = step.run((C) context.clone());
+                    Signal signal = step.run(context);
                     // 这个工序能完成这项任务，释放信号
-                    if (run.getSignal() == FlowContext.Signal.PASS) {
-                        passed.set(run);
+                    if (signal == Signal.PASSED) {
+                        passed.set(true);
                         latch.countDown();
                     }
                 } finally {
@@ -62,11 +60,7 @@ public class EntrustFlows<C extends FlowContext> implements IFlows<C> {
             throw new ProcessingFailedException(name(), e);
         }
 
-        final FlowContext flowContext = passed.get();
-        if (flowContext != null) return (C) flowContext;
-        // TODO: 2022/2/14 ERROR 信号
-        // 委托不能完成，终止
-        return (C) context.clone().setSignal(FlowContext.Signal.TERMINATE);
+        return passed.get() ? Signal.PASSED : Signal.TERMINATED;
     }
 
     @Override

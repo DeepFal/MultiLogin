@@ -1,20 +1,19 @@
 package moe.caa.multilogin.flows.workflows;
 
 import lombok.Getter;
-import moe.caa.multilogin.flows.FlowContext;
 import moe.caa.multilogin.flows.ProcessingFailedException;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 代表一个并行的车间
  * 所有工序必须全部 PASS
  */
-public class ParallelFlows<C extends FlowContext> implements IFlows<C> {
+public class ParallelFlows<C> extends IFlows<C> {
     @Getter
     private final List<IFlows<C>> steps;
 
@@ -27,11 +26,11 @@ public class ParallelFlows<C extends FlowContext> implements IFlows<C> {
     }
 
     @Override
-    public C run(C context) {
+    public Signal run(C context) {
+        // 存放终止信号
+        AtomicBoolean terminate = new AtomicBoolean(false);
         // 信号
         CountDownLatch latch = new CountDownLatch(1);
-        // 异常信号
-        AtomicReference<IFlows<C>> error = new AtomicReference<>();
         // 存放当前有多少工序加工
         List<IFlows<C>> currentTasks = Collections.synchronizedList(new ArrayList<>());
         // 避免阻死
@@ -39,13 +38,13 @@ public class ParallelFlows<C extends FlowContext> implements IFlows<C> {
         for (IFlows<C> step : steps) {
             flag = true;
             currentTasks.add(step);
-            FlowContext.getExecutorService().execute(() -> {
+            IFlows.getExecutorService().execute(() -> {
                 try {
-                    final FlowContext run = step.run(context);
-                    // 这个工序异常
-                    if (run.getSignal() == FlowContext.Signal.ERROR) error.set(step);
+                    Signal signal = step.run(context);
+                    if (signal != Signal.TERMINATED) return;
                     // 这个工序不能完成当前任务，释放信号
-                    if (run.getSignal() != FlowContext.Signal.PASS) latch.countDown();
+                    terminate.set(true);
+                    latch.countDown();
                 } finally {
                     currentTasks.remove(step);
                     // 全部完成这个工序，释放信号
@@ -59,10 +58,7 @@ public class ParallelFlows<C extends FlowContext> implements IFlows<C> {
         } catch (InterruptedException e) {
             throw new ProcessingFailedException(name(), e);
         }
-        if (context.getSignal() == FlowContext.Signal.ERROR)
-            throw new ProcessingFailedException(error.get().name(), context.getThrowable());
-
-        return context;
+        return terminate.get() ? Signal.TERMINATED : Signal.PASSED;
     }
 
     @Override

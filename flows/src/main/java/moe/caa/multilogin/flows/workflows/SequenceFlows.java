@@ -1,8 +1,6 @@
 package moe.caa.multilogin.flows.workflows;
 
 import lombok.Getter;
-import moe.caa.multilogin.flows.FlowContext;
-import moe.caa.multilogin.flows.ProcessingFailedException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,7 +8,7 @@ import java.util.List;
 /**
  * 代表顺序流
  */
-public class SequenceFlows<C extends FlowContext> implements IFlows<C> {
+public class SequenceFlows<C> extends IFlows<C> {
     @Getter
     private final List<IFlows<C>> steps;
 
@@ -23,17 +21,15 @@ public class SequenceFlows<C extends FlowContext> implements IFlows<C> {
     }
 
     @Override
-    public C run(C context) {
+    public Signal run(C context) {
         for (IFlows<C> step : steps) {
-            context = step.run(context);
+            Signal signal = step.run(context);
             // PASS， 继续执行
-            if (context.getSignal() == FlowContext.Signal.PASS) continue;
+            if (signal == Signal.PASSED) continue;
             // 中断
-            if (context.getSignal() == FlowContext.Signal.TERMINATE) break;
-            // 工序异常，直接报错
-            throw new ProcessingFailedException(step.name(), context.getThrowable());
+            if (signal == Signal.TERMINATED) return Signal.TERMINATED;
         }
-        return context;
+        return Signal.PASSED;
     }
 
     @Override
