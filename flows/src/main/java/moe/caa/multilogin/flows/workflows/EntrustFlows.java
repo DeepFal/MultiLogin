@@ -57,14 +57,9 @@ public class EntrustFlows<C> extends IFlows<C> {
         if (flag) try {
             latch.await();
         } catch (InterruptedException e) {
-            throw new ProcessingFailedException(name(), e);
+            throw new ProcessingFailedException(e);
         }
 
         return passed.get() ? Signal.PASSED : Signal.TERMINATED;
-    }
-
-    @Override
-    public String name() {
-        return "EntrustFlows";
     }
 }

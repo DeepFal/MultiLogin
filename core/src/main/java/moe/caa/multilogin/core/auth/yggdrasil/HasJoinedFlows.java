@@ -3,7 +3,6 @@ package moe.caa.multilogin.core.auth.yggdrasil;
 import moe.caa.multilogin.core.auth.yggdrasil.response.HasJoinedResponse;
 import moe.caa.multilogin.core.config.YggdrasilService;
 import moe.caa.multilogin.core.main.MultiCore;
-import moe.caa.multilogin.flows.FlowContext;
 import moe.caa.multilogin.flows.workflows.IFlows;
 
 import java.io.IOException;
@@ -15,26 +14,25 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 
-public class HasJoinedFlows implements IFlows<HasJoinedContext> {
+public class HasJoinedFlows extends IFlows<HasJoinedContext> {
     private static final HttpResponse.BodyHandler<InputStream> inputStreamBodyHandler = HttpResponse.BodyHandlers.ofInputStream();
 
     private final YggdrasilService yggdrasilService;
-    private final String name;
 
-    public HasJoinedFlows(YggdrasilService yggdrasilService, String name) {
+    protected HasJoinedFlows(YggdrasilService yggdrasilService) {
         this.yggdrasilService = yggdrasilService;
-        this.name = name;
     }
 
     @Override
-    public HasJoinedContext run(HasJoinedContext context) {
+    public Signal run(HasJoinedContext context) {
         try {
             HasJoinedResponse response = yggdrasilService.isPostMode() ? sendPost(context, yggdrasilService.buildPostContent(context)) : sendGet(context);
-            if (response == null) return (HasJoinedContext) context.setSignal(FlowContext.Signal.TERMINATE);
-            return context;
+            if (response != null) return Signal.PASSED;
+            context.getAuthenticationFailed().add(yggdrasilService);
+            return Signal.TERMINATED;
         } catch (Throwable throwable) {
-            // TODO: 2022/2/14 debug ...
-            return (HasJoinedContext) context.setSignal(FlowContext.Signal.ERROR).setThrowable(throwable);
+            context.getServiceUnavailable().put(yggdrasilService, throwable);
+            return Signal.TERMINATED;
         }
     }
 
@@ -77,10 +75,5 @@ public class HasJoinedFlows implements IFlows<HasJoinedContext> {
             if (remain <= 0) throw throwable;
             return sendRetry(request, remain - 1);
         }
-    }
-
-    @Override
-    public String name() {
-        return name;
     }
 }

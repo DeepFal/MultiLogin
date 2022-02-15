@@ -30,11 +30,6 @@ public abstract class IFlows<CONTEXT> {
      */
     public abstract Signal run(CONTEXT context);
 
-    /**
-     * 获得工序名称
-     */
-    public abstract String name();
-
     public enum Signal {
 
         /**

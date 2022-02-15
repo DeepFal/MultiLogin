@@ -3,7 +3,6 @@ package moe.caa.multilogin.loader.main;
 import lombok.Getter;
 import moe.caa.multilogin.api.MultiLoginAPI;
 import moe.caa.multilogin.api.plugin.IPlugin;
-import moe.caa.multilogin.flows.FlowContext;
 import moe.caa.multilogin.flows.workflows.IFlows;
 import moe.caa.multilogin.flows.workflows.ParallelFlows;
 import moe.caa.multilogin.loader.Library;
@@ -200,30 +199,30 @@ public class PluginLoader {
      *
      * @param downloads 需要下载的依赖列表
      */
-    private void downloadLibraries(List<Library> downloads) throws InterruptedException, IOException {
-        ParallelFlows downloadFlows = new ParallelFlows<>();
+    private void downloadLibraries(List<Library> downloads) throws IOException {
+        ParallelFlows<Void> downloadFlows = new ParallelFlows<>();
         // 存放下载失败的依赖项
         List<Library> failList = Collections.synchronizedList(new ArrayList<>());
 
         for (Library library : downloads) {
-            downloadFlows.getSteps().add(IFlows.of("Download " + library.getFileName(), objectFlowContext -> {
-                try {
-                    File output = new File(librariesFolder, library.getFileName());
-                    String libraryUrl = library.getLibraryUrl("https://repo1.maven.org/maven2", false);
-                    downloadFile(libraryUrl, output);
-                    Logger.LoggerProvider.getLogger().info("Downloaded: " + library.getFileName());
-                } catch (Throwable throwable) {
-                    Logger.LoggerProvider.getLogger().error(throwable);
-                    failList.add(library);
+            downloadFlows.getSteps().add(new IFlows<>() {
+                @Override
+                public Signal run(Void o) {
+                    try {
+                        File output = new File(librariesFolder, library.getFileName());
+                        String libraryUrl = library.getLibraryUrl("https://repo1.maven.org/maven2", false);
+                        downloadFile(libraryUrl, output);
+                        Logger.LoggerProvider.getLogger().info("Downloaded: " + library.getFileName());
+                        return Signal.PASSED;
+                    } catch (Throwable throwable) {
+                        Logger.LoggerProvider.getLogger().error(throwable);
+                        failList.add(library);
+                        return Signal.TERMINATED;
+                    }
                 }
-            }));
+            });
         }
-        downloadFlows.run(new FlowContext() {
-            @Override
-            public FlowContext clone() {
-                return this;
-            }
-        });
+        downloadFlows.run(null);
 
         if (failList.isEmpty()) return;
         // 抛出依赖下载异常

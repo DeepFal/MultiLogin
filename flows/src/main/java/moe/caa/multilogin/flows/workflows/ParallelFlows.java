@@ -56,13 +56,8 @@ public class ParallelFlows<C> extends IFlows<C> {
         if (flag) try {
             latch.await();
         } catch (InterruptedException e) {
-            throw new ProcessingFailedException(name(), e);
+            throw new ProcessingFailedException(e);
         }
         return terminate.get() ? Signal.TERMINATED : Signal.PASSED;
-    }
-
-    @Override
-    public String name() {
-        return "ParallelFlows";
     }
 }
