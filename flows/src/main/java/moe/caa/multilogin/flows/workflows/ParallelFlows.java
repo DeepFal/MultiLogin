@@ -13,15 +13,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * 代表一个并行的车间
  * 所有工序必须全部 PASS
  */
-public class ParallelFlows<C> extends IFlows<C> {
+public class ParallelFlows<C> extends BaseFlows<C> {
     @Getter
-    private final List<IFlows<C>> steps;
+    private final List<BaseFlows<C>> steps;
 
     public ParallelFlows() {
         this(new ArrayList<>());
     }
 
-    public ParallelFlows(List<IFlows<C>> steps) {
+    public ParallelFlows(List<BaseFlows<C>> steps) {
         this.steps = (steps);
     }
 
@@ -32,13 +32,13 @@ public class ParallelFlows<C> extends IFlows<C> {
         // 信号
         CountDownLatch latch = new CountDownLatch(1);
         // 存放当前有多少工序加工
-        List<IFlows<C>> currentTasks = Collections.synchronizedList(new ArrayList<>());
+        List<BaseFlows<C>> currentTasks = Collections.synchronizedList(new ArrayList<>());
         // 避免阻死
         boolean flag = false;
-        for (IFlows<C> step : steps) {
+        for (BaseFlows<C> step : steps) {
             flag = true;
             currentTasks.add(step);
-            IFlows.getExecutorService().execute(() -> {
+            BaseFlows.getExecutorService().execute(() -> {
                 try {
                     Signal signal = step.run(context);
                     if (signal != Signal.TERMINATED) return;

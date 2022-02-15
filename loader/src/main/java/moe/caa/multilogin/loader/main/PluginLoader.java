@@ -3,7 +3,7 @@ package moe.caa.multilogin.loader.main;
 import lombok.Getter;
 import moe.caa.multilogin.api.MultiLoginAPI;
 import moe.caa.multilogin.api.plugin.IPlugin;
-import moe.caa.multilogin.flows.workflows.IFlows;
+import moe.caa.multilogin.flows.workflows.BaseFlows;
 import moe.caa.multilogin.flows.workflows.ParallelFlows;
 import moe.caa.multilogin.loader.Library;
 import moe.caa.multilogin.loader.PriorURLClassLoader;
@@ -18,6 +18,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.util.*;
@@ -54,6 +55,7 @@ public class PluginLoader {
      */
     public void close() throws IOException {
         pluginClassLoader.close();
+        removeAllFiles(tempLibrariesFolder);
     }
 
     /**
@@ -205,7 +207,7 @@ public class PluginLoader {
         List<Library> failList = Collections.synchronizedList(new ArrayList<>());
 
         for (Library library : downloads) {
-            downloadFlows.getSteps().add(new IFlows<>() {
+            downloadFlows.getSteps().add(new BaseFlows<>() {
                 @Override
                 public Signal run(Void o) {
                     try {
@@ -275,6 +277,18 @@ public class PluginLoader {
                 sb.append("/");
         }
         return sb.toString();
+    }
+
+    private boolean removeAllFiles(File file){
+        if (!file.exists()) return false;
+        if (!file.isFile()) {
+            File[] files = file.listFiles();
+            if (files == null) return false;
+            for (File f : files) {
+                removeAllFiles(f);
+            }
+        }
+        return file.delete();
     }
 
     /**

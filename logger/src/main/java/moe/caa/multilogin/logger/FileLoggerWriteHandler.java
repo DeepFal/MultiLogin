@@ -24,8 +24,8 @@ public class FileLoggerWriteHandler implements Logger {
     /**
      * 初始化这个日志记录程序
      */
-    protected void init(File folder) throws IOException {
-        File tempFile = File.createTempFile("log4j2-temp", "multilogin");
+    protected void init(File folder, File tempFolder) throws IOException {
+        File tempFile = File.createTempFile("log4j2-temp", "multilogin", tempFolder);
         tempFile.deleteOnExit();
         LineNumberReader reader = new LineNumberReader(new InputStreamReader(Objects.requireNonNull(getClass().getClassLoader().getResourceAsStream("multilogin_log4j2.xml"))));
         String rePlacePath = folder.getAbsolutePath();

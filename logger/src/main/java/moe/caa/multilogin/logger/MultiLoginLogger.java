@@ -19,6 +19,7 @@ public class MultiLoginLogger implements Logger {
     private static final MultiLoginLogger instance = new MultiLoginLogger();
 
     private File loggerFolder;
+    private File tempFolder;
     private BaseLoggerBridge loggerBridge;
     private FileLoggerWriteHandler fileLoggerWriteHandler;
 
@@ -39,7 +40,7 @@ public class MultiLoginLogger implements Logger {
         if (fileLoggerWriteHandler != null) return;
         try {
             this.fileLoggerWriteHandler = new FileLoggerWriteHandler();
-            fileLoggerWriteHandler.init(loggerFolder);
+            fileLoggerWriteHandler.init(loggerFolder, tempFolder);
             Logger.LoggerProvider.setLogger(this);
         } catch (Throwable e) {
             this.fileLoggerWriteHandler = null;

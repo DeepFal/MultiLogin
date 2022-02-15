@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * @param <CONTEXT> 加工上下文
  */
-public abstract class IFlows<CONTEXT> {
+public abstract class BaseFlows<CONTEXT> {
     @Getter(value = AccessLevel.PROTECTED)
     private static final AtomicInteger asyncThreadId = new AtomicInteger(0);
 

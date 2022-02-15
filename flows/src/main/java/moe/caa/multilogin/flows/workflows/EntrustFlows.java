@@ -13,15 +13,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * 代表一个并行的委托流
  * 所有工序并行尝试加工这个零件，直到有一条工序能顺利完成。
  */
-public class EntrustFlows<C> extends IFlows<C> {
+public class EntrustFlows<C> extends BaseFlows<C> {
     @Getter
-    private final List<IFlows<C>> steps;
+    private final List<BaseFlows<C>> steps;
 
     public EntrustFlows() {
         this(new ArrayList<>());
     }
 
-    public EntrustFlows(List<IFlows<C>> steps) {
+    public EntrustFlows(List<BaseFlows<C>> steps) {
         this.steps = (steps);
     }
 
@@ -32,13 +32,13 @@ public class EntrustFlows<C> extends IFlows<C> {
         // 信号
         CountDownLatch latch = new CountDownLatch(1);
         // 存放当前有多少工序加工
-        List<IFlows<C>> currentTasks = Collections.synchronizedList(new ArrayList<>());
+        List<BaseFlows<C>> currentTasks = Collections.synchronizedList(new ArrayList<>());
         // 避免阻死
         boolean flag = false;
-        for (IFlows<C> step : steps) {
+        for (BaseFlows<C> step : steps) {
             flag = true;
             currentTasks.add(step);
-            IFlows.getExecutorService().execute(() -> {
+            BaseFlows.getExecutorService().execute(() -> {
                 try {
                     Signal signal = step.run(context);
                     // 这个工序能完成这项任务，释放信号

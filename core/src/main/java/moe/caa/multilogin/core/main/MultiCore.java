@@ -13,6 +13,7 @@ import moe.caa.multilogin.core.auth.yggdrasil.response.serialize.PropertySeriali
 import moe.caa.multilogin.core.config.PluginConfig;
 import moe.caa.multilogin.core.config.YggdrasilService;
 import moe.caa.multilogin.core.database.SQLManager;
+import moe.caa.multilogin.flows.workflows.BaseFlows;
 import moe.caa.multilogin.language.LanguageHandler;
 import moe.caa.multilogin.logger.Logger;
 import moe.caa.multilogin.logger.LoggerLoadFailedException;
@@ -62,9 +63,18 @@ public class MultiCore implements MultiLoginAPI {
     }
 
     @Override
-    public void init() throws IOException, ClassNotFoundException, SQLException {
+    public void onEnabled() throws IOException, ClassNotFoundException, SQLException {
         reload();
         sqlManager.init();
+    }
+
+    @Override
+    public void onDisabled() {
+        sqlManager.close();
+        plugin.getRunServer().getScheduler().shutdown();
+        MultiLoginLogger.getInstance().terminate();
+        BaseFlows.close();
+        plugin.getRunServer().shutdown();
     }
 
 

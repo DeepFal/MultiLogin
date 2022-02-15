@@ -40,31 +40,34 @@ public class MultiLoginVelocity implements IPlugin {
         this.dataDirectory = dataDirectory;
         this.runServer = new VelocityServer(server);
 
+        final File temp = new File(dataDirectory.toFile(), "temp");
+
         // 初始化 Logger
         final Slf4JLoggerBridge slf4JLoggerBridge = new Slf4JLoggerBridge(logger);
         moe.caa.multilogin.logger.Logger.LoggerProvider.setLogger(slf4JLoggerBridge);
         final MultiLoginLogger instance = MultiLoginLogger.getInstance();
         instance.setLoggerBridge(slf4JLoggerBridge);
         instance.setLoggerFolder(dataDirectory.toFile());
+        instance.setTempFolder(temp);
         if (instance.canInit()) {
             instance.init();
         }
 
         // 加载插件依赖
+
         pluginLoader = new PluginLoader(new File(dataDirectory.toFile(), "libraries"),
-                new File(dataDirectory.toFile(), "temp"));
+                temp);
         multiLoginAPI = pluginLoader.load(this);
     }
 
     @Subscribe
     public void onInitialize(ProxyInitializeEvent event) throws Throwable {
-        multiLoginAPI.init();
-//        multiLoginAPI.init
+        multiLoginAPI.onEnabled();
     }
 
     @Subscribe
     public void onDisable(ProxyShutdownEvent event) throws IOException {
-//        multiLoginAPI.disable
+        multiLoginAPI.onDisabled();
         pluginLoader.close();
     }
 
