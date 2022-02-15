@@ -6,6 +6,7 @@ import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
+import fun.ksnb.multilogin.velocity.auth.VelocityAuthCore;
 import fun.ksnb.multilogin.velocity.impl.VelocityServer;
 import lombok.Getter;
 import moe.caa.multilogin.api.MultiLoginAPI;
@@ -19,6 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 
+// TODO: 2022/2/15 ???
 public class MultiLoginVelocity implements IPlugin {
     @Getter
     private final ProxyServer server;
@@ -33,14 +35,17 @@ public class MultiLoginVelocity implements IPlugin {
     private final MultiLoginAPI multiLoginAPI;
     private final PluginLoader pluginLoader;
 
+    private final VelocityAuthCore velocityAuthCore;
 
     @Inject
     public MultiLoginVelocity(ProxyServer server, Logger logger, @DataDirectory Path dataDirectory) throws Throwable {
         this.server = server;
         this.dataDirectory = dataDirectory;
         this.runServer = new VelocityServer(server);
+        this.velocityAuthCore = new VelocityAuthCore(server, this);
 
-        final File temp = new File(dataDirectory.toFile(), "temp");
+        final File temp = generateFolder(new File(dataDirectory.toFile(), "temp"));
+        generateFolder(dataDirectory.toFile());
 
         // 初始化 Logger
         final Slf4JLoggerBridge slf4JLoggerBridge = new Slf4JLoggerBridge(logger);
@@ -60,9 +65,18 @@ public class MultiLoginVelocity implements IPlugin {
         multiLoginAPI = pluginLoader.load(this);
     }
 
+    private File generateFolder(File file) throws IOException {
+        if (!file.exists() && !file.mkdirs()) {
+            throw new IOException(String.format("Unable to create folder: %s", file.getAbsolutePath()));
+        }
+        return file;
+    }
+
     @Subscribe
     public void onInitialize(ProxyInitializeEvent event) throws Throwable {
         multiLoginAPI.onEnabled();
+        velocityAuthCore.init();
+
     }
 
     @Subscribe

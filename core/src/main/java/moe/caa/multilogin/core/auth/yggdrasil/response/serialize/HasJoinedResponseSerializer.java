@@ -2,8 +2,8 @@ package moe.caa.multilogin.core.auth.yggdrasil.response.serialize;
 
 import com.google.gson.*;
 import lombok.NoArgsConstructor;
-import moe.caa.multilogin.core.auth.yggdrasil.response.HasJoinedResponse;
-import moe.caa.multilogin.core.auth.yggdrasil.response.Property;
+import moe.caa.multilogin.api.auth.yggdrasil.response.HasJoinedResponse;
+import moe.caa.multilogin.api.auth.yggdrasil.response.Property;
 import moe.caa.multilogin.core.util.ValueUtil;
 
 import java.lang.reflect.Type;

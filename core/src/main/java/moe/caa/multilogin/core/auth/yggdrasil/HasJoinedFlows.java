@@ -1,6 +1,6 @@
 package moe.caa.multilogin.core.auth.yggdrasil;
 
-import moe.caa.multilogin.core.auth.yggdrasil.response.HasJoinedResponse;
+import moe.caa.multilogin.api.auth.yggdrasil.response.HasJoinedResponse;
 import moe.caa.multilogin.core.config.YggdrasilService;
 import moe.caa.multilogin.core.main.MultiCore;
 import moe.caa.multilogin.flows.workflows.BaseFlows;

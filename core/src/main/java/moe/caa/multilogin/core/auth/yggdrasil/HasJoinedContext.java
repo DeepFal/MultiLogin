@@ -1,7 +1,7 @@
 package moe.caa.multilogin.core.auth.yggdrasil;
 
 import lombok.Data;
-import moe.caa.multilogin.core.auth.yggdrasil.response.HasJoinedResponse;
+import moe.caa.multilogin.api.auth.yggdrasil.response.HasJoinedResponse;
 import moe.caa.multilogin.core.config.YggdrasilService;
 import moe.caa.multilogin.core.util.Pair;
 

@@ -31,9 +31,4 @@ public class SequenceFlows<C> extends BaseFlows<C> {
         }
         return Signal.PASSED;
     }
-
-    @Override
-    public String name() {
-        return "SequenceFlows";
-    }
 }

@@ -2,14 +2,14 @@ package moe.caa.multilogin.core.auth.yggdrasil.response.serialize;
 
 import com.google.gson.*;
 import lombok.NoArgsConstructor;
-import moe.caa.multilogin.core.auth.yggdrasil.response.Property;
+import moe.caa.multilogin.api.auth.yggdrasil.response.Property;
 
 import java.lang.reflect.Type;
 
 /**
  * Property 的 GSON 序列化程序
  *
- * @see moe.caa.multilogin.core.auth.yggdrasil.response.Property
+ * @see Property
  */
 @NoArgsConstructor
 public class PropertySerializer implements JsonSerializer<Property>, JsonDeserializer<Property> {
