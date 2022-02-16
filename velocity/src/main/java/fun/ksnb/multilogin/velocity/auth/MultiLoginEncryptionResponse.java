@@ -83,7 +83,6 @@ public class MultiLoginEncryptionResponse extends EncryptionResponse {
         String serverId = generateServerId(decryptedSharedSecret, serverKeyPair.getPublic());
         String playerIp = ((InetSocketAddress) mcConnection.getRemoteAddress()).getHostString();
 
-
         final VelocityUserLogin velocityUserLogin = new VelocityUserLogin(username, serverId, playerIp, loginSessionHandler, disconnectable);
         VelocityAuthCore.getInstance().getMultiLoginVelocity().getRunServer().getScheduler().runTaskAsync(velocityUserLogin::doAuth);
         return true;

@@ -1,6 +1,8 @@
 package fun.ksnb.multilogin.velocity.impl;
 
 import com.velocitypowered.api.proxy.ProxyServer;
+import com.velocitypowered.proxy.config.PlayerInfoForwarding;
+import com.velocitypowered.proxy.config.VelocityConfiguration;
 import moe.caa.multilogin.api.plugin.BaseScheduler;
 import moe.caa.multilogin.api.plugin.IPlayerManager;
 import moe.caa.multilogin.api.plugin.IServer;
@@ -38,8 +40,7 @@ public class VelocityServer implements IServer {
 
     @Override
     public boolean isForwarded() {
-        // TODO: 2022/2/13 ???
-        return true;
+        return ((VelocityConfiguration) server.getConfiguration()).getPlayerInfoForwardingMode() != PlayerInfoForwarding.NONE;
     }
 
     @Override

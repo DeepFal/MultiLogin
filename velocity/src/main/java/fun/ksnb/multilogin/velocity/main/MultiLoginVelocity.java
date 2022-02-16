@@ -68,7 +68,6 @@ public class MultiLoginVelocity implements IPlugin {
     public void onInitialize(ProxyInitializeEvent event) throws Throwable {
         multiLoginAPI.onEnable();
         velocityAuthCore.init();
-
     }
 
     @Subscribe

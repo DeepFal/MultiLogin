@@ -61,11 +61,38 @@ public class MultiCore implements MultiLoginAPI {
         LanguageHandler.getInstance().init("message.properties");
     }
 
+    /**
+     * 检查条件
+     *
+     * @return 是否启用
+     */
+    private boolean checkCondition() {
+        if (plugin.getRunServer().isOnlineMode()) {
+            Logger.LoggerProvider.getLogger().warn("The server is running in offline mode, in which the plugin does not work at all !!!");
+            return false;
+        }
+        if (!plugin.getRunServer().isForwarded()) {
+            Logger.LoggerProvider.getLogger()
+                    .warn("No forwarding will be done, All player UUID's will be out of control, with serious consequence !!!");
+            return false;
+        }
+        if (!plugin.getRunServer().isWhitelist()) {
+            Logger.LoggerProvider.getLogger()
+                    .warn("The vanilla whitelist does not work with this multi-authentication system. Turn it off.");
+        }
+        return true;
+    }
+
     @Override
     public void onEnable() {
         try {
             reload();
             sqlManager.init();
+            if (!checkCondition()) {
+                onDisabled();
+                return;
+            }
+            Logger.LoggerProvider.getLogger().info("Plugin enabled.");
         } catch (Throwable throwable) {
             Logger.LoggerProvider.getLogger().error(
                     "A fatal error occurred when the plugin was enabled, shutting down the server.", throwable);
