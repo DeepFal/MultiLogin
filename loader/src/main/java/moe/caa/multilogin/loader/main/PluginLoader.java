@@ -5,6 +5,7 @@ import moe.caa.multilogin.api.MultiLoginAPI;
 import moe.caa.multilogin.api.plugin.IPlugin;
 import moe.caa.multilogin.flows.workflows.BaseFlows;
 import moe.caa.multilogin.flows.workflows.ParallelFlows;
+import moe.caa.multilogin.loader.InitialFailedException;
 import moe.caa.multilogin.loader.Library;
 import moe.caa.multilogin.loader.PriorURLClassLoader;
 import moe.caa.multilogin.logger.Logger;
@@ -52,8 +53,9 @@ public class PluginLoader {
     /**
      * 关闭
      */
-    public void close() throws IOException {
-        pluginClassLoader.close();
+    public synchronized void close() throws IOException {
+        if (pluginClassLoader != null) pluginClassLoader.close();
+        pluginClassLoader = null;
         removeAllFiles(tempLibrariesFolder);
     }
 
@@ -190,9 +192,15 @@ public class PluginLoader {
 
         pluginClassLoader = new URLClassLoader(urls.toArray(new URL[0]), getClass().getClassLoader());
 
-        Class<?> coreMain = Class.forName("moe.caa.multilogin.core.main.MultiCore", true, pluginClassLoader);
-        final Constructor<?> constructor = coreMain.getConstructor(IPlugin.class);
-        return (MultiLoginAPI) constructor.newInstance(plugin);
+        try {
+            Class<?> coreMain = Class.forName("moe.caa.multilogin.core.main.MultiCore", true, pluginClassLoader);
+            final Constructor<?> constructor = coreMain.getConstructor(IPlugin.class);
+            return (MultiLoginAPI) constructor.newInstance(plugin);
+        } catch (Throwable throwable) {
+            throw new InitialFailedException(
+                    "An exception occurred during the final initialization of the plugin."
+                    , throwable);
+        }
     }
 
     /**

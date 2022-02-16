@@ -21,7 +21,8 @@ public abstract class BaseFlows<CONTEXT> {
             new Thread(r, "MultiLogin Flows #" + asyncThreadId.incrementAndGet())
     );
 
-    public static void close() {
+    public static synchronized void close() {
+        if (executorService.isShutdown()) return;
         executorService.shutdown();
     }
 

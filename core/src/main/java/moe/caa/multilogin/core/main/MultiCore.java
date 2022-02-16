@@ -22,7 +22,6 @@ import moe.caa.multilogin.logger.MultiLoginLogger;
 import java.io.*;
 import java.net.http.HttpClient;
 import java.nio.charset.StandardCharsets;
-import java.sql.SQLException;
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
@@ -63,20 +62,38 @@ public class MultiCore implements MultiLoginAPI {
     }
 
     @Override
-    public void onEnabled() throws IOException, ClassNotFoundException, SQLException {
-        reload();
-        sqlManager.init();
+    public void onEnable() {
+        try {
+            reload();
+            sqlManager.init();
+        } catch (Throwable throwable) {
+            Logger.LoggerProvider.getLogger().error(
+                    "A fatal error occurred when the plugin was enabled, shutting down the server.", throwable);
+            onDisabled();
+        }
     }
 
     @Override
     public void onDisabled() {
-        sqlManager.close();
-        plugin.getRunServer().getScheduler().shutdown();
-        MultiLoginLogger.getInstance().terminate();
-        BaseFlows.close();
-        plugin.getRunServer().shutdown();
-    }
+        try {
+            // 首先关闭所有线程池确保服务端能正常关闭
+            plugin.getRunServer().getScheduler().shutdown();
+            BaseFlows.close();
 
+            // 关闭 Log4J
+            MultiLoginLogger.getInstance().terminate();
+
+            // 关闭服务端
+            plugin.getRunServer().shutdown();
+
+            // 关闭数据库（故障率最高，挪到最后）
+            sqlManager.close();
+        } catch (Throwable throwable) {
+            Logger.LoggerProvider.getLogger().info("An exception occurred while the plugin was disabled.", throwable);
+        } finally {
+            Logger.LoggerProvider.getLogger().info("Plugin disabled.");
+        }
+    }
 
     @Override
     public synchronized void reload() throws IOException {

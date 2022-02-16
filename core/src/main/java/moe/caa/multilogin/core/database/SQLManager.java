@@ -74,7 +74,8 @@ public class SQLManager {
         cacheWhitelistDataHandler.init();
     }
 
-    public void close() {
+    public synchronized void close() {
         if (pool != null) pool.close();
+        pool = null;
     }
 }

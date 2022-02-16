@@ -4,7 +4,7 @@ import moe.caa.multilogin.api.auth.Auth;
 
 public interface MultiLoginAPI {
 
-    void onEnabled() throws Throwable;
+    void onEnable() throws Throwable;
 
     void onDisabled();
 

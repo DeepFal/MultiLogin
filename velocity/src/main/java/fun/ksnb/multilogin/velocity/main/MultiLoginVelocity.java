@@ -33,6 +33,7 @@ public class MultiLoginVelocity implements IPlugin {
 
     @Getter
     private final MultiLoginAPI multiLoginAPI;
+
     private final PluginLoader pluginLoader;
 
     private final VelocityAuthCore velocityAuthCore;
@@ -44,8 +45,7 @@ public class MultiLoginVelocity implements IPlugin {
         this.runServer = new VelocityServer(server);
         this.velocityAuthCore = new VelocityAuthCore(server, this);
 
-        final File temp = generateFolder(new File(dataDirectory.toFile(), "temp"));
-        generateFolder(dataDirectory.toFile());
+        final File temp = new File(dataDirectory.toFile(), "temp");
 
         // 初始化 Logger
         final Slf4JLoggerBridge slf4JLoggerBridge = new Slf4JLoggerBridge(logger);
@@ -59,22 +59,14 @@ public class MultiLoginVelocity implements IPlugin {
         }
 
         // 加载插件依赖
-
         pluginLoader = new PluginLoader(new File(dataDirectory.toFile(), "libraries"),
                 temp);
         multiLoginAPI = pluginLoader.load(this);
     }
 
-    private File generateFolder(File file) throws IOException {
-        if (!file.exists() && !file.mkdirs()) {
-            throw new IOException(String.format("Unable to create folder: %s", file.getAbsolutePath()));
-        }
-        return file;
-    }
-
     @Subscribe
     public void onInitialize(ProxyInitializeEvent event) throws Throwable {
-        multiLoginAPI.onEnabled();
+        multiLoginAPI.onEnable();
         velocityAuthCore.init();
 
     }

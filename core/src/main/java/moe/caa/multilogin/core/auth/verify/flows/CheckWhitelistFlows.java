@@ -2,6 +2,7 @@ package moe.caa.multilogin.core.auth.verify.flows;
 
 import moe.caa.multilogin.core.auth.verify.VerifyContext;
 import moe.caa.multilogin.core.database.SQLManager;
+import moe.caa.multilogin.core.main.MultiCore;
 import moe.caa.multilogin.flows.workflows.BaseFlows;
 import moe.caa.multilogin.language.LanguageHandler;
 import moe.caa.multilogin.logger.Logger;
@@ -16,7 +17,7 @@ public class CheckWhitelistFlows extends BaseFlows<VerifyContext> {
     @Override
     public Signal run(VerifyContext verifyContext) {
         try {
-            final SQLManager sqlManager = verifyContext.getVerifyCore().getAuthCore().getCore().getSqlManager();
+            final SQLManager sqlManager = MultiCore.getInstance().getSqlManager();
             if (sqlManager.getUserDataHandler()
                     .hasWhitelist(verifyContext.getResponse().getId(), verifyContext.getService().getId()))
                 return Signal.PASSED;
