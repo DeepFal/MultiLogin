@@ -75,17 +75,34 @@ public class ValueUtil {
     }
 
     /**
-     * 字符数组变字符串
-     *
-     * @param chars 字符数组
-     * @return 字符串
+     * Bytes 转二进制字符串
      */
-    public static String charArrayToString(char[] chars) {
-        StringBuilder sb = new StringBuilder();
-        for (char c : chars) {
-            sb.append(c);
+    public static String getBinaryStringByByteArray(byte[] bytes) {
+        StringBuilder result = new StringBuilder();
+        for (byte b : bytes) {
+            result.append(getBinaryStrFromByte(b));
         }
-        return sb.toString();
+        return result.toString();
+    }
+
+    /**
+     * Byte 转二进制字符串
+     */
+    public static String getBinaryStrFromByte(byte b) {
+        StringBuilder result = new StringBuilder();
+        byte a = b;
+        for (int i = 0; i < 8; i++) {
+            byte c = a;
+            a = (byte) (a >> 1);
+            a = (byte) (a << 1);
+            if (a == c) {
+                result.insert(0, "0");
+            } else {
+                result.insert(0, "1");
+            }
+            a = (byte) (a >> 1);
+        }
+        return result.toString();
     }
 
     /**

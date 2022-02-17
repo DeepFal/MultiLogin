@@ -1,6 +1,6 @@
 package moe.caa.multilogin.api;
 
-import moe.caa.multilogin.api.auth.Auth;
+import moe.caa.multilogin.api.auth.AuthAPI;
 
 public interface MultiLoginAPI {
 
@@ -10,5 +10,5 @@ public interface MultiLoginAPI {
 
     void reload() throws Throwable;
 
-    Auth getAuthCore();
+    AuthAPI getAuthCore();
 }

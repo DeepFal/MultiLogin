@@ -1,7 +1,9 @@
 package moe.caa.multilogin.core.auth;
 
 import lombok.Getter;
-import moe.caa.multilogin.api.auth.Auth;
+import moe.caa.multilogin.api.auth.AuthAPI;
+import moe.caa.multilogin.api.auth.yggdrasil.response.HasJoinedResponse;
+import moe.caa.multilogin.api.auth.yggdrasil.response.Property;
 import moe.caa.multilogin.core.auth.verify.VerifyContext;
 import moe.caa.multilogin.core.auth.verify.VerifyCore;
 import moe.caa.multilogin.core.auth.yggdrasil.HasJoinedContext;
@@ -14,7 +16,7 @@ import moe.caa.multilogin.logger.Logger;
 
 import java.util.Map;
 
-public class AuthCore implements Auth {
+public class AuthCore implements AuthAPI {
 
     @Getter
     private final MultiCore core;
@@ -76,22 +78,28 @@ public class AuthCore implements Auth {
             }
         }
 
+        final HasJoinedResponse hasJoinedResponse = context.getResponse().get().getValue1();
+        final YggdrasilService yggdrasilService = context.getResponse().get().getValue2();
+
         // 二次验证
         VerifyContext verify;
         try {
-            verify = verifyCore.verify(context.getResponse().get().getValue1(), context.getResponse().get().getValue2());
+            verify = verifyCore.verify(hasJoinedResponse, yggdrasilService);
         } catch (Throwable e) {
             Logger.LoggerProvider.getLogger().error("An exception was encountered while processing validation.", e);
             final String message = LanguageHandler.getInstance().getMessage("auth_verify_error");
-            return disallowed(username, serverId, ip, context.getResponse().get().getValue2().getId(), message);
+            return disallowed(username, serverId, ip, yggdrasilService.getId(), message);
         }
         final String s = verify.getKickMessage().get();
         if (s != null) {
-            return disallowed(username, serverId, ip, context.getResponse().get().getValue2().getId(), s);
+            return disallowed(username, serverId, ip, yggdrasilService.getId(), s);
         }
-        Logger.LoggerProvider.getLogger().info(String.format("Allowed to login. (username: %s, service: %d)", username, context.getResponse().get().getValue2().getId()));
-        context.getResponse().get().getValue1().setId(verify.getInGameUuid().get());
-        return AuthResultImpl.ofAllowed(context.getResponse().get().getValue1(), context.getResponse().get().getValue2());
+        Logger.LoggerProvider.getLogger().info(String.format("Allowed to login. (username: %s, service: %d)", username, yggdrasilService.getId()));
+        hasJoinedResponse.setId(verify.getInGameUuid().get());
+
+        final Property textures = hasJoinedResponse.getPropertyMap().get("textures");
+        if (textures != null) core.getSkinRestorer().doRestorer(textures, yggdrasilService);
+        return AuthResultImpl.ofAllowed(hasJoinedResponse, yggdrasilService);
     }
 
     private AuthResultImpl disallowed(String username, String serverId, String ip, String cause) {

@@ -29,6 +29,9 @@ public class MultiLoginVelocity implements IPlugin {
     private final Path dataDirectory;
 
     @Getter
+    private final File tempFolder;
+
+    @Getter
     private final VelocityServer runServer;
 
     @Getter
@@ -44,8 +47,7 @@ public class MultiLoginVelocity implements IPlugin {
         this.dataDirectory = dataDirectory;
         this.runServer = new VelocityServer(server);
         this.velocityAuthCore = new VelocityAuthCore(server, this);
-
-        final File temp = new File(dataDirectory.toFile(), "temp");
+        this.tempFolder = new File(dataDirectory.toFile(), "temp");
 
         // 初始化 Logger
         final Slf4JLoggerBridge slf4JLoggerBridge = new Slf4JLoggerBridge(logger);
@@ -53,14 +55,14 @@ public class MultiLoginVelocity implements IPlugin {
         final MultiLoginLogger instance = MultiLoginLogger.getInstance();
         instance.setLoggerBridge(slf4JLoggerBridge);
         instance.setLoggerFolder(dataDirectory.toFile());
-        instance.setTempFolder(temp);
+        instance.setTempFolder(tempFolder);
         if (instance.canInit()) {
             instance.init();
         }
 
         // 加载插件依赖
         pluginLoader = new PluginLoader(new File(dataDirectory.toFile(), "libraries"),
-                temp);
+                tempFolder);
         multiLoginAPI = pluginLoader.load(this);
     }
 

@@ -30,7 +30,7 @@ public class CheckWhitelistFlows extends BaseFlows<VerifyContext> {
                 return Signal.PASSED;
             }
 
-            if(!MultiCore.getInstance().getConfig().isGlobalWhitelist()){
+            if (!MultiCore.getInstance().getConfig().isGlobalWhitelist()) {
                 if (!verifyContext.getService().isWhitelist()) return Signal.PASSED;
             }
 

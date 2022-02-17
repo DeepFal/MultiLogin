@@ -22,6 +22,11 @@ public interface IPlugin {
     File getDataFolder();
 
     /**
+     * 临时文件夹
+     */
+    File getTempFolder();
+
+    /**
      * 获得插件版本
      *
      * @return 插件版本

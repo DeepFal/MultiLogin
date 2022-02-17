@@ -13,6 +13,7 @@ import moe.caa.multilogin.core.auth.yggdrasil.response.serialize.PropertySeriali
 import moe.caa.multilogin.core.config.PluginConfig;
 import moe.caa.multilogin.core.config.YggdrasilService;
 import moe.caa.multilogin.core.database.SQLManager;
+import moe.caa.multilogin.core.skinrestorer.SkinRestorer;
 import moe.caa.multilogin.flows.workflows.BaseFlows;
 import moe.caa.multilogin.language.LanguageHandler;
 import moe.caa.multilogin.logger.Logger;
@@ -22,6 +23,8 @@ import moe.caa.multilogin.logger.MultiLoginLogger;
 import java.io.*;
 import java.net.http.HttpClient;
 import java.nio.charset.StandardCharsets;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
@@ -45,18 +48,22 @@ public class MultiCore implements MultiLoginAPI {
     private final AuthCore authCore;
 
     @Getter
+    private final SkinRestorer skinRestorer;
+
+    @Getter
     private HttpClient httpClient;
 
     @Getter
     private PluginConfig config;
 
-    public MultiCore(IPlugin plugin) throws LoggerLoadFailedException, IOException {
+    public MultiCore(IPlugin plugin) throws LoggerLoadFailedException, IOException, NoSuchAlgorithmException, InvalidKeySpecException {
         if (instance != null) {
             throw new UnsupportedOperationException("Repeated");
         }
         MultiCore.instance = this;
         this.plugin = plugin;
         this.sqlManager = new SQLManager(this);
+        this.skinRestorer = new SkinRestorer(this);
         this.authCore = new AuthCore(this);
         MultiLoginLogger.getInstance().init();
         LanguageHandler.getInstance().init("message.properties");

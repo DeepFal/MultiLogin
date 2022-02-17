@@ -45,7 +45,7 @@ public class SkinRestorerDataHandler {
         try (Connection connection = sqlManager.getPool().getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(
                      String.format("INSERT INTO %s (%s, %s, %s) VALUES(?, ?, ?)",
-                             SQLManager.getUserDataTableName(), fieldSkinUrl, fieldRestorerValue,
+                             SQLManager.getSkinRestorerTableName(), fieldSkinUrl, fieldRestorerValue,
                              fieldRestorerSignature
                      ))) {
 
@@ -63,7 +63,7 @@ public class SkinRestorerDataHandler {
         try (Connection connection = sqlManager.getPool().getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(
                      String.format("SELECT %s, %s FROM %s WHERE %s = ? limit 1",
-                             fieldRestorerValue, fieldRestorerSignature, SQLManager.getUserDataTableName(), fieldSkinUrl
+                             fieldRestorerValue, fieldRestorerSignature, SQLManager.getSkinRestorerTableName(), fieldSkinUrl
                      ))) {
             preparedStatement.setBytes(1, MessageDigest.getInstance("SHA-256").digest(skinUrl.getBytes(StandardCharsets.UTF_8)));
             try (final ResultSet resultSet = preparedStatement.executeQuery()) {
@@ -95,7 +95,7 @@ public class SkinRestorerDataHandler {
     public int removeAllSkinRestorerData() throws SQLException {
         try (Connection connection = sqlManager.getPool().getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement("TRUNCATE TABLE " +
-                     SQLManager.getUserDataTableName()
+                     SQLManager.getSkinRestorerTableName()
              )) {
             return preparedStatement.executeUpdate();
         }
