@@ -14,16 +14,15 @@ MultiLogin 是一款服务端插件(MOD)， 功能是让您的服务器支持正
     * 支持添加 [authlib-injector](https://github.com/to2mbn/authlib-injector) 所规范的 Yggdrasil 服务器
     * 支持添加 [统一通行证](https://login2.nide8.com:233/) Yggdrasil 服务器
     * 支持添加畸形 Yggdrasil 服务器
-* 限制账户仅能使用其中一种验证方式，杜绝重复 UUID 所造成的危害，保护账号安全
+* 较好的重复 UUID 处理机制，不会出现数据混乱
 * 阻止服务器内出现重名账户
 * 阻止强制登入 ID 已被注册的账户
 * 可使用正则约束用户名命名方式
 * 支持以 Yggdrasil 服务器分组管理的白名单系统
 * 支持控制用户在游戏内的 UUID
 * 可控制的重复登入机制
-* 支持 PlaceholderAPI
 * 自动修复皮肤签名问题
-* 支持 Velocity、Bungee、Bukkit、Fabric
+* 支持 Velocity、Bungee
 
 ## BUG 汇报
 
@@ -37,11 +36,11 @@ MultiLogin 是一款服务端插件(MOD)， 功能是让您的服务器支持正
 
     gradle shadowJar
 
-构建输出位于 `bukkit/build/libs`、`bungee/build/libs`、`velocity/build/libs`、`fabric/build/libs` 下。
+构建输出位于 `bungee/build/libs`、`velocity/build/libs` 下。
 
 ## 安装
 
-插件不需要使用 `authlib-injector` 无必要的前置插件，不需要添加和更改 `JVM` 参数，将合适的版本丢进 `plugins`、`mods` 文件夹下即可使用
+插件需要使用 `Java 11` ，不需要使用 `authlib-injector` ，无必须的前置插件，不需要添加和更改 `JVM` 参数，将合适的版本丢进 `plugins` 文件夹下即可使用。
 
 ## 文档
 
