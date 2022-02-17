@@ -29,7 +29,7 @@ public class VerifyCore {
             new CheckNameRegularFlows(),
             // 重名检查和更新用户名
             new CheckDuplicateCurrentUsernameFlows(),
-            // 白名单检查（有问题！）
+            // 白名单检查
             new CheckWhitelistFlows(),
             // 新玩家生成它在游戏内的UUID
             new NewPlayerGenerateInGameUuidFlows()
@@ -68,12 +68,12 @@ public class VerifyCore {
 
             // 更新数据
             if (context.getOriginalData().getValue2().equals(context.getNewData().getValue2())) {
-                if (context.getOriginalData().getValue3() != context.getOriginalData().getValue3()) {
+                if (context.getOriginalData().getValue3() != context.getNewData().getValue3()) {
                     // 更新白名单
                     authCore.getCore().getSqlManager().getUserDataHandler().updateWhitelist(response.getId(), service.getId(), context.getNewData().getValue3());
                 }
             } else {
-                if (context.getOriginalData().getValue3() != context.getOriginalData().getValue3()) {
+                if (context.getOriginalData().getValue3() != context.getNewData().getValue3()) {
                     // 更新白名单和名字
                     authCore.getCore().getSqlManager().getUserDataHandler().updateUsernameAndWhitelist(response.getId(),
                             service.getId(), context.getNewData().getValue2(), context.getNewData().getValue3());

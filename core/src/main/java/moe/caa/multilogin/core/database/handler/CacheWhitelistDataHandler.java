@@ -29,7 +29,7 @@ public class CacheWhitelistDataHandler {
              PreparedStatement preparedStatement = connection.prepareStatement("CREATE TABLE IF NOT EXISTS " + SQLManager.getCacheWhitelistTableName() + "(" +
                      fieldCurrentUsername + " VARCHAR(32), " +
                      fieldOnlineUuid + " BINARY(16), " +
-                     fieldYggdrasilId + " TINYINT DEFAULT -1 )"
+                     fieldYggdrasilId + " TINYINT)"
              )) {
             preparedStatement.executeUpdate();
         }
@@ -101,45 +101,33 @@ public class CacheWhitelistDataHandler {
              PreparedStatement preparedStatement = connection.prepareStatement(
                      MessageFormat.format(
                              "DELETE FROM {0} WHERE " +
-                                     "({1} = -1 " +
-                                     "and ((" +
-                                     "{2} is null " +
-                                     "and {3} = ?" + // 只判断 currentUsername
-                                     ") or (" +
-                                     "{2} is not null " +
-                                     "and ((" +
-                                     "{3} is null " +
-                                     "and {2} = ?" + // 只判断 onlineUuid
-                                     ") or (" +
-                                     "{3} is not null " +
-                                     "and {2} = ? and {3} = ? " + // 判断 currentUsername 和 onlineUuid
-                                     ")))) " +
-                                     "or ({1} <> -1 " +
-                                     "and (({2} is null " +
-                                     "and {3} = ? and {1} = ?" + // 判断 currentUsername 和 yggdrasilId
-                                     ") or (" +
-                                     "{2} is not null " +
-                                     "and ((" +
-                                     "{3} is null and {2} = ? and {1} = ?" + // 判断 onlineUuid 和 yggdrasilId
-                                     ") or (" +
-                                     "{3} is not null " +
-                                     "and {2} = ? and {3} = ? and {1} = ?" + // 判断 onlineUuid 和 yggdrasilId 和 currentUsername
-                                     ")))))"
-                             , SQLManager.getCacheWhitelistTableName(),
-                             fieldYggdrasilId, fieldOnlineUuid, currentUsername
-                     ))) {
 
-            preparedStatement.setString(1, currentUsername);
+                                     "({2} IS NULL AND {3} IS NULL AND {1} IS NOT NULL AND {1} = ?)" + " OR " +
+                                     "({3} IS NULL AND {1} IS NULL AND {2} IS NOT NULL AND {2} = ?)" + " OR " +
+                                     "({1} IS NULL AND {2} IS NULL AND {3} IS NOT NULL AND {3} = ?)" + " OR " +
+
+                                     "({3} IS NULL AND {2} IS NOT NULL AND {1} IS NOT NULL AND {1} = ? AND {2} = ?)" + " OR " +
+                                     "({1} IS NULL AND {2} IS NOT NULL AND {3} IS NOT NULL AND {2} = ? AND {3} = ?)" + " OR " +
+                                     "({2} IS NULL AND {3} IS NOT NULL AND {1} IS NOT NULL AND {3} = ? AND {1} = ?)" + " OR " +
+
+                                     "({3} IS NOT NULL AND {2} IS NOT NULL AND {1} IS NOT NULL AND {1} = ? AND {2} = ? AND {3} = ?)"
+                             , SQLManager.getCacheWhitelistTableName(),
+                             fieldYggdrasilId, fieldOnlineUuid, fieldCurrentUsername
+                     ))) {
+            preparedStatement.setInt(1, yggdrasilId);
             preparedStatement.setBytes(2, ValueUtil.uuidToBytes(onlineUuid));
-            preparedStatement.setBytes(3, ValueUtil.uuidToBytes(onlineUuid));
-            preparedStatement.setString(4, currentUsername);
-            preparedStatement.setString(5, currentUsername);
-            preparedStatement.setInt(6, yggdrasilId);
-            preparedStatement.setBytes(7, ValueUtil.uuidToBytes(onlineUuid));
-            preparedStatement.setInt(8, yggdrasilId);
-            preparedStatement.setBytes(9, ValueUtil.uuidToBytes(onlineUuid));
-            preparedStatement.setString(10, currentUsername);
-            preparedStatement.setInt(11, yggdrasilId);
+            preparedStatement.setString(3, currentUsername);
+
+            preparedStatement.setInt(4, yggdrasilId);
+            preparedStatement.setBytes(5, ValueUtil.uuidToBytes(onlineUuid));
+            preparedStatement.setBytes(6, ValueUtil.uuidToBytes(onlineUuid));
+            preparedStatement.setString(7, currentUsername);
+            preparedStatement.setString(8, currentUsername);
+            preparedStatement.setInt(9, yggdrasilId);
+
+            preparedStatement.setInt(10, yggdrasilId);
+            preparedStatement.setBytes(11, ValueUtil.uuidToBytes(onlineUuid));
+            preparedStatement.setString(12, currentUsername);
             return preparedStatement.executeUpdate() != 0;
         }
     }
