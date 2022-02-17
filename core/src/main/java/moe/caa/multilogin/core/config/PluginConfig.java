@@ -20,7 +20,6 @@ public class PluginConfig {
     private int servicesTimeOut;
     private int skinRestorerRetryDelay;
     private boolean globalWhitelist;
-    private boolean strictMode;
 
     private SQLBackendType sqlBackend;
     private String sqlIp;
@@ -55,7 +54,6 @@ public class PluginConfig {
         config.skinRestorerRetryDelay = conf.node("skinRestorerRetryDelay").getInt(500);
         config.globalWhitelist = conf.node("globalWhitelist").getBoolean(true);
         config.globalWhitelist = conf.node("strictMode").getBoolean(true);
-        config.strictMode = conf.node("strictMode").getBoolean(true);
 
         // 读数据库配置
         final CommentedConfigurationNode sql = conf.node("sql");
