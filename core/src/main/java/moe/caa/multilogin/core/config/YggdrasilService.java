@@ -23,7 +23,6 @@ import java.util.stream.Collectors;
 public class YggdrasilService {
     private final int id;
     private final boolean enable;
-    private final String name;
 
     // body section start.
     private final String url;
@@ -59,7 +58,6 @@ public class YggdrasilService {
         }
 
         boolean enable = section.node("enable").getBoolean(true);
-        String name = section.node("name").getString("");
 
         CommentedConfigurationNode body = section.node("body");
         String url = Objects.requireNonNull(body.node("url").getString(), "url is null at " + Arrays.stream(body.node("url").path().array()).map(Object::toString).collect(Collectors.joining(".")));
@@ -80,7 +78,7 @@ public class YggdrasilService {
         SkinRestorerMethodType method = skinRestorer.node("method").get(SkinRestorerMethodType.class, SkinRestorerMethodType.URL);
         int retry = skinRestorer.node("retry").getInt(2);
 
-        return new YggdrasilService(id, enable, name,
+        return new YggdrasilService(id, enable,
                 url, postMode, passIp, ipContent, postContent,
                 transformUuid, transformRepeatAdjust, nameAllowedRegular, whitelist, refuseRepeatedLogin, authRetry,
                 restorer, method, retry);

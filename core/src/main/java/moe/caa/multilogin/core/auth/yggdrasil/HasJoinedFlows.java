@@ -3,6 +3,7 @@ package moe.caa.multilogin.core.auth.yggdrasil;
 import moe.caa.multilogin.api.auth.yggdrasil.response.HasJoinedResponse;
 import moe.caa.multilogin.core.config.YggdrasilService;
 import moe.caa.multilogin.core.main.MultiCore;
+import moe.caa.multilogin.core.util.Pair;
 import moe.caa.multilogin.flows.workflows.BaseFlows;
 
 import java.io.IOException;
@@ -25,8 +26,12 @@ public class HasJoinedFlows extends BaseFlows<HasJoinedContext> {
     @Override
     public Signal run(HasJoinedContext context) {
         try {
+
             HasJoinedResponse response = yggdrasilService.isPostMode() ? sendPost(context, yggdrasilService.buildPostContent(context)) : sendGet(context);
-            if (response != null) return Signal.PASSED;
+            if (response != null) {
+                context.getResponse().set(new Pair<>(response, yggdrasilService));
+                return Signal.PASSED;
+            }
             context.getAuthenticationFailed().add(yggdrasilService);
             return Signal.TERMINATED;
         } catch (Throwable throwable) {

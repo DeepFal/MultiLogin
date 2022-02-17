@@ -51,23 +51,23 @@ public class AuthCore implements Auth {
             return disallowed(username, serverId, ip, message);
         }
 
-        // 打印验证信息
-        Logger.LoggerProvider.getLogger().debug(String.format("Yggdrasil authentication of %s is complete, with %d exceptions and %d authentication failures, %s.",
-                username, context.getServiceUnavailable().size(), context.getAuthenticationFailed().size(),
-                context.getResponse().get() == null ? "finally failed to authenticate" : " finally authenticated"
-        ));
-
-        // 打印验证时报错
-        for (Map.Entry<YggdrasilService, Throwable> entry : context.getServiceUnavailable().entrySet()) {
-            final String format = String.format("From username %s, service %d (%s), serverId %s, ip %s.",
-                    username, entry.getKey().getId(), entry.getKey().getName(), serverId, ip
-            );
-            Logger.LoggerProvider.getLogger().debug(format, new ServiceUnavailableException(
-                    format, entry.getValue()));
-        }
-
         // 踢出
         if (context.getResponse().get() == null) {
+            // 打印验证失败的详细信息
+            Logger.LoggerProvider.getLogger().debug(String.format("Yggdrasil authentication of %s failed, with %d exceptions and %d authentication failures.",
+                    username, context.getServiceUnavailable().size(), context.getAuthenticationFailed().size()
+            ));
+
+            // 打印验证失败的详细报错
+            for (Map.Entry<YggdrasilService, Throwable> entry : context.getServiceUnavailable().entrySet()) {
+                final String format = String.format("From username %s, service %d, serverId %s, ip %s.",
+                        username, entry.getKey().getId(), serverId, ip
+                );
+                Logger.LoggerProvider.getLogger().debug(format, new ServiceUnavailableException(
+                        format, entry.getValue()));
+            }
+
+            // 踹出去
             if (context.getServiceUnavailable().size() == 0) {
                 final String message = LanguageHandler.getInstance().getMessage("auth_yggdrasil_failed_validation_failed");
                 return disallowed(username, serverId, ip, message);

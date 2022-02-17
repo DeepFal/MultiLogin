@@ -50,8 +50,10 @@ public class HasJoinedValidateCore {
                     new HasJoinedFlows(service)
             );
         }
-        // 第一轮有成功的结果就直接返回
-        if (entrustFlows.run(context) == BaseFlows.Signal.PASSED) return context;
+        if (!entrustFlows.getSteps().isEmpty()){
+            // 第一轮有成功的结果就直接返回
+            if (entrustFlows.run(context) == BaseFlows.Signal.PASSED) return context;
+        }
 
         // 新建第二个车间，委托车间
         entrustFlows = new EntrustFlows<>();
