@@ -20,14 +20,14 @@ public class AuthResultImpl implements AuthResult {
     /**
      * 构建成功登录的结果
      */
-    public static AuthResultImpl ofAllowed(HasJoinedResponse response, YggdrasilService service) {
+    protected static AuthResultImpl ofAllowed(HasJoinedResponse response, YggdrasilService service) {
         return new AuthResultImpl(response, service, null);
     }
 
     /**
      * 构建失败登录的结果
      */
-    public static AuthResultImpl ofDisallowed(String kickMessage) {
+    protected static AuthResultImpl ofDisallowed(String kickMessage) {
         return new AuthResultImpl(null, null, kickMessage);
     }
 

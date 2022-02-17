@@ -37,7 +37,8 @@ public class AuthCore implements Auth {
         Logger.LoggerProvider.getLogger().debug(String.format("Processing login requests. (username: %s, serverId: %s, ip: %s)", username, serverId, ip));
 
         if (core.getConfig().getYggdrasilServices().stream().noneMatch(YggdrasilService::isEnable)) {
-            return AuthResultImpl.ofDisallowed(LanguageHandler.getInstance().getMessage("auth_yggdrasil_failed_no_server"));
+            final String message = LanguageHandler.getInstance().getMessage("auth_yggdrasil_failed_no_server");
+            return disallowed(username, serverId, ip, message);
         }
 
         // HasJoined 验证
@@ -46,7 +47,8 @@ public class AuthCore implements Auth {
             context = hasJoinedValidateCore.hasJoined(username, serverId, ip);
         } catch (SQLException e) {
             Logger.LoggerProvider.getLogger().error("An exception was encountered while processing yggdrasil authentication.", e);
-            return AuthResultImpl.ofDisallowed(LanguageHandler.getInstance().getMessage("auth_yggdrasil_error"));
+            final String message = LanguageHandler.getInstance().getMessage("auth_yggdrasil_error");
+            return disallowed(username, serverId, ip, message);
         }
 
         // 打印验证信息
@@ -67,9 +69,11 @@ public class AuthCore implements Auth {
         // 踢出
         if (context.getResponse().get() == null) {
             if (context.getServiceUnavailable().size() == 0) {
-                return AuthResultImpl.ofDisallowed(LanguageHandler.getInstance().getMessage("auth_yggdrasil_failed_validation_failed"));
+                final String message = LanguageHandler.getInstance().getMessage("auth_yggdrasil_failed_validation_failed");
+                return disallowed(username, serverId, ip, message);
             } else {
-                return AuthResultImpl.ofDisallowed(LanguageHandler.getInstance().getMessage("auth_yggdrasil_failed_server_down"));
+                final String message = LanguageHandler.getInstance().getMessage("auth_yggdrasil_failed_server_down");
+                return disallowed(username, serverId, ip, message);
             }
         }
 
@@ -79,12 +83,24 @@ public class AuthCore implements Auth {
             verify = verifyCore.verify(context.getResponse().get().getValue1(), context.getResponse().get().getValue2());
         } catch (SQLException e) {
             Logger.LoggerProvider.getLogger().error("An exception was encountered while processing validation.", e);
-            return AuthResultImpl.ofDisallowed(LanguageHandler.getInstance().getMessage("auth_verify_error"));
+            final String message = LanguageHandler.getInstance().getMessage("auth_verify_error");
+            return disallowed(username, serverId, ip, context.getResponse().get().getValue2().getId(), message);
         }
         final String s = verify.getKickMessage().get();
         if (s != null) {
-            AuthResultImpl.ofDisallowed(s);
+            return disallowed(username, serverId, ip, context.getResponse().get().getValue2().getId(), s);
         }
+        Logger.LoggerProvider.getLogger().debug(String.format("Allowed to login. (username: %s, serverId: %s, ip: %s, service: %d)", username, serverId, ip, context.getResponse().get().getValue2().getId()));
         return AuthResultImpl.ofAllowed(context.getResponse().get().getValue1(), context.getResponse().get().getValue2());
+    }
+
+    private AuthResultImpl disallowed(String username, String serverId, String ip, String cause){
+        Logger.LoggerProvider.getLogger().debug(String.format("Refused to login. (username: %s, serverId: %s, ip: %s, cause: %s)", username, serverId, ip, cause));
+        return AuthResultImpl.ofDisallowed(cause);
+    }
+
+    private AuthResultImpl disallowed(String username, String serverId, String ip, int service, String cause){
+        Logger.LoggerProvider.getLogger().debug(String.format("Refused to login. (username: %s, serverId: %s, ip: %s, service: %d, cause: %s)", username, serverId, ip, service, cause));
+        return AuthResultImpl.ofDisallowed(cause);
     }
 }
