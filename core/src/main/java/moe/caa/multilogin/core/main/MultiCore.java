@@ -30,6 +30,7 @@ public class MultiCore implements MultiLoginAPI {
 
     @Getter
     private static MultiCore instance;
+
     @Getter
     private final Gson gson = new GsonBuilder()
             .registerTypeAdapter(HasJoinedResponse.class, new HasJoinedResponseSerializer())
@@ -67,16 +68,19 @@ public class MultiCore implements MultiLoginAPI {
      * @return 是否启用
      */
     private boolean checkCondition() {
-        if (plugin.getRunServer().isOnlineMode()) {
-            Logger.LoggerProvider.getLogger().warn("The server is running in offline mode, in which the plugin does not work at all !!!");
+        if (!plugin.getRunServer().isOnlineMode()) {
+            Logger.LoggerProvider.getLogger().warn("Plugin does not work on a server running in offline mode.");
+            plugin.getRunServer().shutdown();
             return false;
         }
         if (!plugin.getRunServer().isForwarded()) {
             Logger.LoggerProvider.getLogger()
-                    .warn("No forwarding will be done, All player UUID's will be out of control, with serious consequence !!!");
+                    .warn("Servers that do not forward player raw information are not secure, " +
+                            "all player UUID is generated in offline mode, please enable it.");
+            plugin.getRunServer().shutdown();
             return false;
         }
-        if (!plugin.getRunServer().isWhitelist()) {
+        if (plugin.getRunServer().isWhitelist()) {
             Logger.LoggerProvider.getLogger()
                     .warn("The vanilla whitelist does not work with this multi-authentication system. Turn it off.");
         }
@@ -89,7 +93,6 @@ public class MultiCore implements MultiLoginAPI {
             reload();
             sqlManager.init();
             if (!checkCondition()) {
-                onDisabled();
                 return;
             }
             Logger.LoggerProvider.getLogger().info("Plugin enabled.");
@@ -148,7 +151,7 @@ public class MultiCore implements MultiLoginAPI {
         int enabled = (int) yggdrasilServices.stream().filter(YggdrasilService::isEnable).count();
         Logger.LoggerProvider.getLogger().info(String.format("%d Yggdrasil Service is added, of which %d is enabled.", countAll, enabled));
         if (enabled == 0)
-            Logger.LoggerProvider.getLogger().warn("Without any yggdrasil service enabled, all players will not be able to log in to the game");
+            Logger.LoggerProvider.getLogger().warn("Without any yggdrasil service enabled, all players will not be able to log in to the game.");
 
         httpClient = HttpClient
                 .newBuilder().connectTimeout(Duration.ofMillis(
