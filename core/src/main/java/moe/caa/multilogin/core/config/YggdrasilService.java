@@ -33,7 +33,6 @@ public class YggdrasilService {
     // body section end.
 
     private final UUIDTransform transformUuid;
-    private final boolean transformRepeatAdjust;
     private final String nameAllowedRegular;
     private final boolean whitelist;
     private final boolean refuseRepeatedLogin;
@@ -67,7 +66,6 @@ public class YggdrasilService {
         String postContent = body.node("postContent").getString("{\"username\":\"{username}\", \"serverId\":\"{serverId}\"}");
 
         UUIDTransform transformUuid = section.node("transformUuid").get(UUIDTransform.class, UUIDTransform.DEFAULT);
-        boolean transformRepeatAdjust = section.node("transformRepeatAdjust").getBoolean(false);
         String nameAllowedRegular = section.node("nameAllowedRegular").getString("");
         boolean whitelist = section.node("whitelist").getBoolean(false);
         boolean refuseRepeatedLogin = section.node("refuseRepeatedLogin").getBoolean(false);
@@ -80,7 +78,7 @@ public class YggdrasilService {
 
         return new YggdrasilService(id, enable,
                 url, postMode, passIp, ipContent, postContent,
-                transformUuid, transformRepeatAdjust, nameAllowedRegular, whitelist, refuseRepeatedLogin, authRetry,
+                transformUuid, nameAllowedRegular, whitelist, refuseRepeatedLogin, authRetry,
                 restorer, method, retry);
     }
 

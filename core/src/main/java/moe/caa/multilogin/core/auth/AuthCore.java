@@ -12,7 +12,6 @@ import moe.caa.multilogin.core.main.MultiCore;
 import moe.caa.multilogin.language.LanguageHandler;
 import moe.caa.multilogin.logger.Logger;
 
-import java.sql.SQLException;
 import java.util.Map;
 
 public class AuthCore implements Auth {
@@ -45,7 +44,7 @@ public class AuthCore implements Auth {
         HasJoinedContext context;
         try {
             context = hasJoinedValidateCore.hasJoined(username, serverId, ip);
-        } catch (SQLException e) {
+        } catch (Throwable e) {
             Logger.LoggerProvider.getLogger().error("An exception was encountered while processing yggdrasil authentication.", e);
             final String message = LanguageHandler.getInstance().getMessage("auth_yggdrasil_error");
             return disallowed(username, serverId, ip, message);
@@ -81,7 +80,7 @@ public class AuthCore implements Auth {
         VerifyContext verify;
         try {
             verify = verifyCore.verify(context.getResponse().get().getValue1(), context.getResponse().get().getValue2());
-        } catch (SQLException e) {
+        } catch (Throwable e) {
             Logger.LoggerProvider.getLogger().error("An exception was encountered while processing validation.", e);
             final String message = LanguageHandler.getInstance().getMessage("auth_verify_error");
             return disallowed(username, serverId, ip, context.getResponse().get().getValue2().getId(), message);
@@ -90,16 +89,17 @@ public class AuthCore implements Auth {
         if (s != null) {
             return disallowed(username, serverId, ip, context.getResponse().get().getValue2().getId(), s);
         }
-        Logger.LoggerProvider.getLogger().debug(String.format("Allowed to login. (username: %s, serverId: %s, ip: %s, service: %d)", username, serverId, ip, context.getResponse().get().getValue2().getId()));
+        Logger.LoggerProvider.getLogger().info(String.format("Allowed to login. (username: %s, service: %d)", username, context.getResponse().get().getValue2().getId()));
+        context.getResponse().get().getValue1().setId(verify.getInGameUuid().get());
         return AuthResultImpl.ofAllowed(context.getResponse().get().getValue1(), context.getResponse().get().getValue2());
     }
 
-    private AuthResultImpl disallowed(String username, String serverId, String ip, String cause){
+    private AuthResultImpl disallowed(String username, String serverId, String ip, String cause) {
         Logger.LoggerProvider.getLogger().debug(String.format("Refused to login. (username: %s, serverId: %s, ip: %s, cause: %s)", username, serverId, ip, cause));
         return AuthResultImpl.ofDisallowed(cause);
     }
 
-    private AuthResultImpl disallowed(String username, String serverId, String ip, int service, String cause){
+    private AuthResultImpl disallowed(String username, String serverId, String ip, int service, String cause) {
         Logger.LoggerProvider.getLogger().debug(String.format("Refused to login. (username: %s, serverId: %s, ip: %s, service: %d, cause: %s)", username, serverId, ip, service, cause));
         return AuthResultImpl.ofDisallowed(cause);
     }
