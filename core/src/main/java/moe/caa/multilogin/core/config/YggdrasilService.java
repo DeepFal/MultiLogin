@@ -21,6 +21,9 @@ import java.util.stream.Collectors;
 @ToString
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class YggdrasilService {
+    // 毫不相干的内容，仅在命令中使用
+    private final String path;
+
     private final int id;
     private final boolean enable;
 
@@ -44,7 +47,7 @@ public class YggdrasilService {
     /**
      * 通过配置文件对象解析
      */
-    protected static YggdrasilService parseConfig(CommentedConfigurationNode section) throws SerializationException {
+    protected static YggdrasilService parseConfig(String path, CommentedConfigurationNode section) throws SerializationException {
         int id = section.node("id").getInt(Integer.MIN_VALUE);
         if (id < 0) {
             if (id == Integer.MIN_VALUE) {
@@ -76,7 +79,7 @@ public class YggdrasilService {
         SkinRestorerMethodType method = skinRestorer.node("method").get(SkinRestorerMethodType.class, SkinRestorerMethodType.URL);
         int retry = skinRestorer.node("retry").getInt(2);
 
-        return new YggdrasilService(id, enable,
+        return new YggdrasilService(path, id, enable,
                 url, postMode, passIp, ipContent, postContent,
                 transformUuid, nameAllowedRegular, whitelist, refuseRepeatedLogin, authRetry,
                 restorer, method, retry);

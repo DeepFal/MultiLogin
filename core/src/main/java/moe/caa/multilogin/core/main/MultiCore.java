@@ -10,6 +10,7 @@ import moe.caa.multilogin.api.plugin.IPlugin;
 import moe.caa.multilogin.core.auth.AuthCore;
 import moe.caa.multilogin.core.auth.yggdrasil.response.serialize.HasJoinedResponseSerializer;
 import moe.caa.multilogin.core.auth.yggdrasil.response.serialize.PropertySerializer;
+import moe.caa.multilogin.core.command.CommandHandler;
 import moe.caa.multilogin.core.config.PluginConfig;
 import moe.caa.multilogin.core.config.YggdrasilService;
 import moe.caa.multilogin.core.database.SQLManager;
@@ -51,6 +52,9 @@ public class MultiCore implements MultiLoginAPI {
     private final SkinRestorer skinRestorer;
 
     @Getter
+    private final CommandHandler commandHandler;
+
+    @Getter
     private HttpClient httpClient;
 
     @Getter
@@ -65,6 +69,7 @@ public class MultiCore implements MultiLoginAPI {
         this.sqlManager = new SQLManager(this);
         this.skinRestorer = new SkinRestorer(this);
         this.authCore = new AuthCore(this);
+        this.commandHandler = new CommandHandler(this);
         MultiLoginLogger.getInstance().init();
         LanguageHandler.getInstance().init("message.properties");
     }

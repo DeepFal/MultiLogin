@@ -42,7 +42,8 @@ public class PluginConfig {
         config.yggdrasilServices = new ArrayList<>();
         Set<Integer> temp = new HashSet<>();
         for (CommentedConfigurationNode node : services.childrenMap().values()) {
-            final YggdrasilService e = YggdrasilService.parseConfig(node);
+            final String path = Objects.requireNonNull(node.key()).toString();
+            final YggdrasilService e = YggdrasilService.parseConfig(path, node);
             if (!temp.add(e.getId())) throw new IllegalArgumentException("Duplicate yggdrasil ID: " + e.getId());
             config.yggdrasilServices.add(e);
         }
