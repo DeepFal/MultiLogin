@@ -8,11 +8,9 @@ import moe.caa.multilogin.api.auth.yggdrasil.response.Property;
 import moe.caa.multilogin.core.config.SkinRestorerMethodType;
 import moe.caa.multilogin.core.config.YggdrasilService;
 import moe.caa.multilogin.core.main.MultiCore;
-import moe.caa.multilogin.core.util.ValueUtil;
 
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import javax.imageio.ImageIO;
+import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.http.HttpRequest;
@@ -37,32 +35,64 @@ public class SkinRestorerTask {
         }
     }
 
-    // TODO: 2022/2/17 皮肤问题
     private Property doUpload() throws IOException, URISyntaxException, InterruptedException {
+        final File output = File.createTempFile("textures-", "-multilogin-skinrestorer.png", MultiCore.getInstance().getPlugin().getTempFolder());
+        output.deleteOnExit();
         // 下载皮肤文件
         try (final InputStream stream = sendRetry(inputStreamBodyHandler, HttpRequest.newBuilder()
                         .uri(new URI(skinUrl))
                         .timeout(Duration.ofMillis(MultiCore.getInstance().getConfig().getServicesTimeOut()))
                         .build(),
                 service.getSkinRestorerRetry(), 0);
-             BufferedInputStream bis = new BufferedInputStream(stream);
+
+             ByteArrayOutputStream baos = new ByteArrayOutputStream();
+             PrintWriter pw = new PrintWriter(baos, true);
         ) {
+            final String replace = UUID.randomUUID().toString().replace("-", "");
+            ImageIO.write(ImageIO.read(stream), "png", output);
+            BufferedInputStream imgReader = new BufferedInputStream(new FileInputStream(output));
+            final byte[] imgData = imgReader.readAllBytes();
+            imgReader.close();
 
             // 上传到那个啥mineskin.org
-            final String format = String.format("variant=%s&name=%s&visibility=0&file=%s",
-                    skinModel == null ? "classic" : skinModel,
-                    UUID.randomUUID().toString().substring(0, 6),
-                    ValueUtil.getBinaryStringByByteArray(bis.readAllBytes())
-            );
+            String boundary = "------ML@" + replace;
+            String CRLF = "\r\n";
+
+            // 写文件
+            pw.append(boundary).append(CRLF);
+            pw.append("Content-Disposition: form-data; name=\"file\"; filename=\"").append(replace).append(".png\"").append(CRLF);
+            pw.append("Content-Type: image/png").append(CRLF).append(CRLF);
+            pw.flush();
+            baos.write(imgData);
+            baos.flush();
+            pw.append(CRLF);
+
+            // 写name
+            pw.append(boundary).append(CRLF);
+            pw.append("Content-Disposition: form-data; name=\"name\"").append(CRLF).append(CRLF);
+            pw.append(replace, 0, 6).append(CRLF);
+
+            // 写variant
+            pw.append(boundary).append(CRLF);
+            pw.append("Content-Disposition: form-data; name=\"variant\"").append(CRLF).append(CRLF);
+            pw.append(skinModel == null ? "classic" : skinModel).append(CRLF);
+
+            // 写visibility
+            pw.append(boundary).append(CRLF);
+            pw.append("Content-Disposition: form-data; name=\"visibility\"").append(CRLF).append(CRLF);
+            pw.append("0").append(CRLF);
+
+            pw.append(boundary).append("--").append(CRLF);
+            pw.flush();
+
             final String json = sendRetry(stringBodyHandler, HttpRequest.newBuilder()
                             .uri(new URI("https://api.mineskin.org/generate/upload"))
                             .timeout(Duration.ofMillis(MultiCore.getInstance().getConfig().getServicesTimeOut()))
                             .header("User-Agent", "MultiLogin/v2.0")
-                            .header("Content-Type", "application/x-www-form-urlencoded")
-                            .POST(HttpRequest.BodyPublishers.ofByteArray(format.getBytes()))
+                            .header("Content-Type", "multipart/form-data; boundary=" + boundary.substring(2))
+                            .POST(HttpRequest.BodyPublishers.ofByteArray(baos.toByteArray()))
                             .build(), service.getSkinRestorerRetry()
                     , MultiCore.getInstance().getConfig().getSkinRestorerRetryDelay());
-            System.out.println(json);
             final JsonObject jsonObject = JsonParser.parseString(json
             ).getAsJsonObject().getAsJsonObject("data").getAsJsonObject("texture");
             return Property.builder().name("")

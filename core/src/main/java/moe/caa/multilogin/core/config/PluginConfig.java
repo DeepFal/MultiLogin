@@ -51,7 +51,7 @@ public class PluginConfig {
 
         // 读其他配置
         config.servicesTimeOut = conf.node("servicesTimeOut").getInt(10000);
-        config.skinRestorerRetryDelay = conf.node("skinRestorerRetryDelay").getInt(500);
+        config.skinRestorerRetryDelay = conf.node("skinRestorerRetryDelay").getInt(5000);
         config.globalWhitelist = conf.node("globalWhitelist").getBoolean(true);
         config.globalWhitelist = conf.node("strictMode").getBoolean(true);
 
