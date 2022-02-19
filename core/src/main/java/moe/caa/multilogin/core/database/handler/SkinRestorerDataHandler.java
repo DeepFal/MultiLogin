@@ -74,30 +74,4 @@ public class SkinRestorerDataHandler {
             }
         }
     }
-
-    /**
-     * 移除一条皮肤修复记录
-     */
-    public boolean removeSkinRestorerData(String skinUrl) throws SQLException, NoSuchAlgorithmException {
-        try (Connection connection = sqlManager.getPool().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(
-                     String.format("DELETE FROM %s WHERE %s = ? limit 1",
-                             SQLManager.getUserDataTableName(), fieldSkinUrl
-                     ))) {
-            preparedStatement.setBytes(1, MessageDigest.getInstance("SHA-256").digest(skinUrl.getBytes(StandardCharsets.UTF_8)));
-            return preparedStatement.executeUpdate() == 1;
-        }
-    }
-
-    /**
-     * 移除全部的皮肤修复记录
-     */
-    public int removeAllSkinRestorerData() throws SQLException {
-        try (Connection connection = sqlManager.getPool().getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement("TRUNCATE TABLE " +
-                     SQLManager.getSkinRestorerTableName()
-             )) {
-            return preparedStatement.executeUpdate();
-        }
-    }
 }

@@ -1,6 +1,7 @@
 package fun.ksnb.multilogin.velocity.main;
 
 import com.google.inject.Inject;
+import com.velocitypowered.api.command.CommandManager;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
@@ -70,6 +71,11 @@ public class MultiLoginVelocity implements IPlugin {
     public void onInitialize(ProxyInitializeEvent event) throws Throwable {
         multiLoginAPI.onEnable();
         velocityAuthCore.init();
+
+        CommandManager commandManager = getServer().getCommandManager();
+        MultiLoginVelocityCommandHandler command = new MultiLoginVelocityCommandHandler(this);
+        commandManager.register(commandManager.metaBuilder("multilogin").build(), command);
+        commandManager.register(commandManager.metaBuilder("whitelist").build(), command);
     }
 
     @Subscribe

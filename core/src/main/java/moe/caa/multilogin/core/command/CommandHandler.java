@@ -1,12 +1,17 @@
 package moe.caa.multilogin.core.command;
 
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.ArgumentType;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.Suggestion;
 import com.mojang.brigadier.suggestion.Suggestions;
 import lombok.Getter;
 import moe.caa.multilogin.api.command.CommandAPI;
 import moe.caa.multilogin.api.plugin.ISender;
+import moe.caa.multilogin.core.command.commands.MultiLoginCommand;
+import moe.caa.multilogin.core.command.commands.WhitelistCommand;
 import moe.caa.multilogin.core.main.MultiCore;
 import moe.caa.multilogin.language.LanguageHandler;
 import moe.caa.multilogin.logger.Logger;
@@ -29,22 +34,35 @@ public class CommandHandler implements CommandAPI {
     public CommandHandler(MultiCore core) {
         this.core = core;
         CommandSyntaxException.BUILT_IN_EXCEPTIONS = new BuiltInExceptions();
+
+        new MultiLoginCommand().register(dispatcher);
+        new WhitelistCommand().register(dispatcher);
+    }
+
+    public static LiteralArgumentBuilder<ISender> literal(String literal) {
+        return LiteralArgumentBuilder.literal(literal);
+    }
+
+    public static <T> RequiredArgumentBuilder<ISender, T> argument(String name, ArgumentType<T> type) {
+        return RequiredArgumentBuilder.argument(name, type);
     }
 
     @Override
     public void execute(ISender sender, String[] args) {
-        Logger.LoggerProvider.getLogger().debug(String.format("Executing command: %s. (%s)", String.join(" ", args), sender.getName()));
-        try {
-            dispatcher.execute(String.join(" ", args), sender);
-        } catch (CommandSyntaxException e) {
-            sender.sendMessage(e.getRawMessage().getString());
-            Logger.LoggerProvider.getLogger().debug("argument: " + String.join(" ", args), e);
-        } catch (Exception e) {
-            sender.sendMessage(LanguageHandler.getInstance().getMessage("command_error"));
-            Logger.LoggerProvider.getLogger().error("An exception occurred while executing the command.", e);
-            Logger.LoggerProvider.getLogger().error("sender: " + sender.getName());
-            Logger.LoggerProvider.getLogger().error("argument: " + String.join(" ", args));
-        }
+        MultiCore.getInstance().getPlugin().getRunServer().getScheduler().runTaskAsync(() -> {
+            Logger.LoggerProvider.getLogger().debug(String.format("Executing command: %s. (%s)", String.join(" ", args), sender.getName()));
+            try {
+                dispatcher.execute(String.join(" ", args), sender);
+            } catch (CommandSyntaxException e) {
+                sender.sendMessage(e.getRawMessage().getString());
+                Logger.LoggerProvider.getLogger().debug("argument: " + String.join(" ", args), e);
+            } catch (Exception e) {
+                sender.sendMessage(LanguageHandler.getInstance().getMessage("command_error"));
+                Logger.LoggerProvider.getLogger().error("An exception occurred while executing the command.", e);
+                Logger.LoggerProvider.getLogger().error("sender: " + sender.getName());
+                Logger.LoggerProvider.getLogger().error("argument: " + String.join(" ", args));
+            }
+        });
     }
 
     @Override

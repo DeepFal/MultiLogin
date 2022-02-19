@@ -15,6 +15,7 @@ import moe.caa.multilogin.core.config.PluginConfig;
 import moe.caa.multilogin.core.config.YggdrasilService;
 import moe.caa.multilogin.core.database.SQLManager;
 import moe.caa.multilogin.core.skinrestorer.SkinRestorer;
+import moe.caa.multilogin.core.util.CheckUpdater;
 import moe.caa.multilogin.flows.workflows.BaseFlows;
 import moe.caa.multilogin.language.LanguageHandler;
 import moe.caa.multilogin.logger.Logger;
@@ -22,6 +23,7 @@ import moe.caa.multilogin.logger.LoggerLoadFailedException;
 import moe.caa.multilogin.logger.MultiLoginLogger;
 
 import java.io.*;
+import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
@@ -55,6 +57,9 @@ public class MultiCore implements MultiLoginAPI {
     private final CommandHandler commandHandler;
 
     @Getter
+    private CheckUpdater checkUpdater;
+
+    @Getter
     private HttpClient httpClient;
 
     @Getter
@@ -64,14 +69,14 @@ public class MultiCore implements MultiLoginAPI {
         if (instance != null) {
             throw new UnsupportedOperationException("Repeated");
         }
+        LanguageHandler.getInstance().init("message.properties");
+        MultiLoginLogger.getInstance().init();
         MultiCore.instance = this;
         this.plugin = plugin;
         this.sqlManager = new SQLManager(this);
         this.skinRestorer = new SkinRestorer(this);
         this.authCore = new AuthCore(this);
         this.commandHandler = new CommandHandler(this);
-        MultiLoginLogger.getInstance().init();
-        LanguageHandler.getInstance().init("message.properties");
     }
 
     /**
@@ -107,12 +112,29 @@ public class MultiCore implements MultiLoginAPI {
             if (!checkCondition()) {
                 return;
             }
+
+            checkUpdater();
+
             Logger.LoggerProvider.getLogger().info("Plugin enabled.");
         } catch (Throwable throwable) {
             Logger.LoggerProvider.getLogger().error(
                     "A fatal error occurred when the plugin was enabled, shutting down the server.", throwable);
             onDisabled();
         }
+    }
+
+    private void checkUpdater() {
+        plugin.getRunServer().getScheduler().runTaskAsync(() -> {
+            try {
+                checkUpdater.doCheck();
+                if (checkUpdater.shouldUpdate()) {
+                    Logger.LoggerProvider.getLogger().info("Note that the latest version is " + checkUpdater.getLatestVersion());
+                    Logger.LoggerProvider.getLogger().info("Please download a new version from https://github.com/CaaMoe/MultiLogin/releases");
+                }
+            } catch (Throwable e) {
+                Logger.LoggerProvider.getLogger().warn("Check update failure.");
+            }
+        });
     }
 
     @Override
@@ -138,7 +160,7 @@ public class MultiCore implements MultiLoginAPI {
     }
 
     @Override
-    public synchronized void reload() throws IOException {
+    public synchronized void reload() throws IOException, URISyntaxException {
         if (!plugin.getDataFolder().exists() && !plugin.getDataFolder().mkdirs()) {
             throw new IOException(String.format("Unable to create folder: %s", plugin.getDataFolder().getAbsolutePath()));
         }
@@ -169,5 +191,7 @@ public class MultiCore implements MultiLoginAPI {
                 .newBuilder().connectTimeout(Duration.ofMillis(
                         MultiCore.getInstance().getConfig().getServicesTimeOut())
                 ).build();
+
+        checkUpdater = new CheckUpdater();
     }
 }

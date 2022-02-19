@@ -44,6 +44,272 @@ public class UserDataHandler {
     }
 
     /**
+     * 判断是否有白名单
+     */
+    public boolean hasWhitelistInGame(UUID inGameUuid) throws SQLException {
+        try (Connection connection = sqlManager.getPool().getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(
+                     String.format("SELECT 1 FROM %s WHERE %s = ? AND %s = ? LIMIT 1",
+                             SQLManager.getUserDataTableName(),
+                             fieldInGameUuid, fieldWhitelist
+                     ))) {
+            preparedStatement.setBytes(1, ValueUtil.uuidToBytes(inGameUuid));
+            preparedStatement.setBoolean(2, true);
+
+            try (final ResultSet resultSet = preparedStatement.executeQuery()) {
+                return resultSet.next();
+            }
+        }
+    }
+
+    /**
+     * 判断是否有白名单
+     */
+    public boolean hasWhitelist(String currentUsername) throws SQLException {
+        try (Connection connection = sqlManager.getPool().getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(
+                     String.format("SELECT 1 FROM %s WHERE %s = ? AND %s = ? LIMIT 1",
+                             SQLManager.getUserDataTableName(),
+                             fieldCurrentUsername, fieldWhitelist
+                     ))) {
+            preparedStatement.setString(1, currentUsername);
+            preparedStatement.setBoolean(2, true);
+
+            try (final ResultSet resultSet = preparedStatement.executeQuery()) {
+                return resultSet.next();
+            }
+        }
+    }
+
+    /**
+     * 移除白名单
+     */
+    public int removeWhitelist(String currentUsername) throws SQLException {
+        try (Connection connection = sqlManager.getPool().getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(
+                     String.format("UPDATE %s SET %s = ? WHERE %s = ? AND %s <> ?",
+                             SQLManager.getUserDataTableName(),
+                             fieldWhitelist, fieldCurrentUsername, fieldWhitelist
+                     ))) {
+            preparedStatement.setBoolean(1, false);
+            preparedStatement.setString(2, currentUsername);
+            preparedStatement.setBoolean(3, false);
+            return preparedStatement.executeUpdate();
+        }
+    }
+
+    /**
+     * 移除白名单
+     */
+    public int removeWhitelist(int yggdrasilId) throws SQLException {
+        try (Connection connection = sqlManager.getPool().getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(
+                     String.format("UPDATE %s SET %s = ? WHERE %s = ? AND %s <> ?",
+                             SQLManager.getUserDataTableName(),
+                             fieldWhitelist, fieldYggdrasilId, fieldWhitelist
+                     ))) {
+            preparedStatement.setBoolean(1, false);
+            preparedStatement.setInt(2, yggdrasilId);
+            preparedStatement.setBoolean(3, false);
+            return preparedStatement.executeUpdate();
+        }
+    }
+
+    /**
+     * 判断是否有白名单
+     */
+    public boolean hasWhitelist(UUID onlineUuid) throws SQLException {
+        try (Connection connection = sqlManager.getPool().getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(
+                     String.format("SELECT 1 FROM %s WHERE %s = ? AND %s = ? LIMIT 1",
+                             SQLManager.getUserDataTableName(),
+                             fieldOnlineUuid, fieldWhitelist
+                     ))) {
+            preparedStatement.setBytes(1, ValueUtil.uuidToBytes(onlineUuid));
+            preparedStatement.setBoolean(2, true);
+
+            try (final ResultSet resultSet = preparedStatement.executeQuery()) {
+                return resultSet.next();
+            }
+        }
+    }
+
+    /**
+     * 移除白名单
+     */
+    public int removeWhitelist(UUID onlineUuid) throws SQLException {
+        try (Connection connection = sqlManager.getPool().getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(
+                     String.format("UPDATE %s SET %s = ? WHERE %s = ? AND %s = ? AND %s <> ?",
+                             SQLManager.getUserDataTableName(),
+                             fieldWhitelist, fieldOnlineUuid, fieldInGameUuid, fieldWhitelist
+                     ))) {
+            preparedStatement.setBoolean(1, false);
+            preparedStatement.setBytes(2, ValueUtil.uuidToBytes(onlineUuid));
+            preparedStatement.setBytes(3, ValueUtil.uuidToBytes(onlineUuid));
+            preparedStatement.setBoolean(4, false);
+            return preparedStatement.executeUpdate();
+        }
+    }
+
+    /**
+     * 判断是否有白名单
+     */
+    public boolean hasWhitelist(String currentUsername, UUID onlineUuid) throws SQLException {
+        try (Connection connection = sqlManager.getPool().getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(
+                     String.format("SELECT 1 FROM %s WHERE %s = ? AND %s = ? AND %s = ? LIMIT 1",
+                             SQLManager.getUserDataTableName(),
+                             fieldCurrentUsername, fieldOnlineUuid, fieldWhitelist
+                     ))) {
+            preparedStatement.setString(1, currentUsername);
+            preparedStatement.setBytes(2, ValueUtil.uuidToBytes(onlineUuid));
+            preparedStatement.setBoolean(3, true);
+
+            try (final ResultSet resultSet = preparedStatement.executeQuery()) {
+                return resultSet.next();
+            }
+        }
+    }
+
+    /**
+     * 移除白名单
+     */
+    public int removeWhitelist(String currentUsername, UUID onlineUuid) throws SQLException {
+        try (Connection connection = sqlManager.getPool().getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(
+                     String.format("UPDATE %s SET %s = ? WHERE %s = ? AND %s = ? AND %s = ? AND %s <> ?",
+                             SQLManager.getUserDataTableName(),
+                             fieldWhitelist, fieldOnlineUuid, fieldInGameUuid, fieldCurrentUsername, fieldWhitelist
+                     ))) {
+            preparedStatement.setBoolean(1, false);
+            preparedStatement.setBytes(2, ValueUtil.uuidToBytes(onlineUuid));
+            preparedStatement.setBytes(3, ValueUtil.uuidToBytes(onlineUuid));
+            preparedStatement.setString(4, currentUsername);
+            preparedStatement.setBoolean(5, false);
+            return preparedStatement.executeUpdate();
+        }
+    }
+
+    /**
+     * 判断是否有白名单
+     */
+    public boolean hasWhitelist(String currentUsername, int yggdrasilId) throws SQLException {
+        try (Connection connection = sqlManager.getPool().getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(
+                     String.format("SELECT 1 FROM %s WHERE %s = ? AND %s = ? AND %s = ? LIMIT 1",
+                             SQLManager.getUserDataTableName(),
+                             fieldCurrentUsername, fieldYggdrasilId, fieldWhitelist
+                     ))) {
+            preparedStatement.setString(1, currentUsername);
+            preparedStatement.setInt(2, yggdrasilId);
+            preparedStatement.setBoolean(3, true);
+
+            try (final ResultSet resultSet = preparedStatement.executeQuery()) {
+                return resultSet.next();
+            }
+        }
+    }
+
+    /**
+     * 移除白名单
+     */
+    public int removeWhitelist(String currentUsername, int yggdrasilId) throws SQLException {
+        try (Connection connection = sqlManager.getPool().getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(
+                     String.format("UPDATE %s SET %s = ? WHERE %s = ? AND %s = ? AND %s <> ?",
+                             SQLManager.getUserDataTableName(),
+                             fieldWhitelist, fieldYggdrasilId, fieldCurrentUsername, fieldWhitelist
+                     ))) {
+            preparedStatement.setInt(2, yggdrasilId);
+            preparedStatement.setString(3, currentUsername);
+            preparedStatement.setBoolean(1, false);
+            preparedStatement.setBoolean(4, false);
+            return preparedStatement.executeUpdate();
+        }
+    }
+
+    /**
+     * 判断是否有白名单
+     */
+    public boolean hasWhitelist(UUID onlineUuid, int yggdrasilId) throws SQLException {
+        try (Connection connection = sqlManager.getPool().getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(
+                     String.format("SELECT 1 FROM %s WHERE %s = ? AND %s = ? AND %s = ? LIMIT 1",
+                             SQLManager.getUserDataTableName(),
+                             fieldOnlineUuid, fieldYggdrasilId, fieldWhitelist
+                     ))) {
+            preparedStatement.setBytes(1, ValueUtil.uuidToBytes(onlineUuid));
+            preparedStatement.setInt(2, yggdrasilId);
+            preparedStatement.setBoolean(3, true);
+
+            try (final ResultSet resultSet = preparedStatement.executeQuery()) {
+                return resultSet.next();
+            }
+        }
+    }
+
+    /**
+     * 移除白名单
+     */
+    public int removeWhitelist(int yggdrasilId, UUID onlineUuid) throws SQLException {
+        try (Connection connection = sqlManager.getPool().getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(
+                     String.format("UPDATE %s SET %s = ? WHERE %s = ? AND %s = ? AND %s = ? AND %s <> ?",
+                             SQLManager.getUserDataTableName(),
+                             fieldWhitelist, fieldOnlineUuid, fieldInGameUuid, fieldYggdrasilId, fieldWhitelist
+                     ))) {
+            preparedStatement.setBoolean(1, false);
+            preparedStatement.setBytes(2, ValueUtil.uuidToBytes(onlineUuid));
+            preparedStatement.setBytes(3, ValueUtil.uuidToBytes(onlineUuid));
+            preparedStatement.setInt(4, yggdrasilId);
+            preparedStatement.setBoolean(5, false);
+            return preparedStatement.executeUpdate();
+        }
+    }
+
+    /**
+     * 判断是否有白名单
+     */
+    public boolean hasWhitelist(String currentUsername, UUID onlineUuid, int yggdrasilId) throws SQLException {
+        try (Connection connection = sqlManager.getPool().getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(
+                     String.format("SELECT 1 FROM %s WHERE %s = ? AND %s = ? AND %s = ? AND %s = ? LIMIT 1",
+                             SQLManager.getUserDataTableName(),
+                             fieldCurrentUsername, fieldOnlineUuid, fieldYggdrasilId, fieldWhitelist
+                     ))) {
+            preparedStatement.setString(1, currentUsername);
+            preparedStatement.setBytes(2, ValueUtil.uuidToBytes(onlineUuid));
+            preparedStatement.setInt(3, yggdrasilId);
+            preparedStatement.setBoolean(4, true);
+
+            try (final ResultSet resultSet = preparedStatement.executeQuery()) {
+                return resultSet.next();
+            }
+        }
+    }
+
+    /**
+     * 移除白名单
+     */
+    public int removeWhitelist(String currentUsername, UUID onlineUuid, int yggdrasilId) throws SQLException {
+        try (Connection connection = sqlManager.getPool().getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(
+                     String.format("UPDATE %s SET %s = ? WHERE %s = ? AND %s = ? AND %s = ? AND %s = ? AND %s <> ?",
+                             SQLManager.getUserDataTableName(),
+                             fieldWhitelist, fieldCurrentUsername, fieldOnlineUuid, fieldInGameUuid, fieldYggdrasilId, fieldWhitelist
+                     ))) {
+            preparedStatement.setBoolean(1, false);
+            preparedStatement.setBytes(2, ValueUtil.uuidToBytes(onlineUuid));
+            preparedStatement.setBytes(3, ValueUtil.uuidToBytes(onlineUuid));
+            preparedStatement.setString(4, currentUsername);
+            preparedStatement.setInt(5, yggdrasilId);
+            preparedStatement.setBoolean(6, false);
+            return preparedStatement.executeUpdate();
+        }
+    }
+
+    /**
      * 通过 onlineUuid 和 yggdrasilId 获取 inGameUuid 和 currentUsername 和 whitelist
      */
     public There<UUID, String, Boolean> getInGameUuidAndCurrentUsernameAndWhitelistByOnlineUuidAndYggdrasilId(UUID onlineUuid, int yggdrasilId) throws SQLException {
