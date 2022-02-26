@@ -30,9 +30,8 @@ public class CheckWhitelistFlows extends BaseFlows<VerifyContext> {
                 return Signal.PASSED;
             }
 
-            if (!MultiCore.getInstance().getConfig().isGlobalWhitelist()) {
-                if (!verifyContext.getService().isWhitelist()) return Signal.PASSED;
-            }
+            if (!verifyContext.getService().isWhitelist()) return Signal.PASSED;
+            if (!MultiCore.getInstance().getConfig().isGlobalWhitelist()) return Signal.PASSED;
 
             verifyContext.getKickMessage().set(LanguageHandler.getInstance().getMessage("auth_verify_failed_no_whitelist"));
             return Signal.TERMINATED;

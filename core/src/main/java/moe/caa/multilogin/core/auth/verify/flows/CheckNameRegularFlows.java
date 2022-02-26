@@ -15,7 +15,7 @@ public class CheckNameRegularFlows extends BaseFlows<VerifyContext> {
 
     @Override
     public Signal run(VerifyContext verifyContext) {
-        String reg = verifyContext.getService().getNameAllowedRegular();
+        String reg = verifyContext.getService().getNameAllowedRegular().trim();
         if (ValueUtil.isEmpty(reg)) return Signal.PASSED;
         if (Pattern.matches(reg, verifyContext.getResponse().getName())) return Signal.PASSED;
         verifyContext.getKickMessage().set(FormatContent.createContent(
