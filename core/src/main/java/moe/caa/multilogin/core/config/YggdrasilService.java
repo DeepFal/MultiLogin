@@ -101,6 +101,7 @@ public class YggdrasilService {
      */
     private String buildIpContent(String ip) {
         if (ValueUtil.isEmpty(ipContent)) return "";
+        if (ValueUtil.isEmpty(ip)) return "";
         return FormatContent.createContent(
                 FormatContent.FormatEntry.builder().name("ip").content(ip).build()
         ).format(ipContent);
