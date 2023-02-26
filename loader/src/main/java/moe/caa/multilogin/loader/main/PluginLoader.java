@@ -21,6 +21,9 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
+/**
+ * 表示插件加载器
+ */
 public class PluginLoader {
     public static final String nestJarName = "MultiLogin-Core.JarFile";
     public static final String coreClassName = "moe.caa.multilogin.core.main.MultiCore";
@@ -91,7 +94,7 @@ public class PluginLoader {
     /**
      * 开始加载
      */
-    public synchronized void load() throws Exception {
+    public synchronized void load(String... additions) throws Exception {
         if (loaded.getAndSet(true)) {
             throw new UnsupportedOperationException("Repeated call.");
         }
@@ -148,7 +151,19 @@ public class PluginLoader {
             );
         }
 
+
         // 提取 nest jar
+        loadNestJar(nestJarName, pluginClassLoader);
+
+
+        for (String addition : additions) {
+            loadNestJar(addition, pluginClassLoader);
+        }
+
+        loadCore();
+    }
+
+    private void loadNestJar(String nestJarName, IExtURLClassLoader classLoader) throws IOException {
         final File output = File.createTempFile(nestJarName + ".", ".jar", plugin.getTempFolder());
         if (!output.exists()) {
             Files.createFile(output.toPath());
@@ -157,25 +172,27 @@ public class PluginLoader {
         try (InputStream is = PluginLoader.class.getClassLoader().getResourceAsStream(nestJarName);
              FileOutputStream fos = new FileOutputStream(output);
         ) {
-            IOUtil.copy(is, fos);
-            fos.flush();
+            IOUtil.copy(Objects.requireNonNull(is, nestJarName), fos);
         }
-
-        pluginClassLoader.addURL(output.toURI().toURL());
-        loadCore();
+        classLoader.addURL(output.toURI().toURL());
     }
 
     private void loadCore() throws Exception {
-        Class<?> coreClass = Class.forName(coreClassName, true, pluginClassLoader.self());
+        Class<?> coreClass = findClass(coreClassName);
         coreObject = (MultiCoreAPI) coreClass.getConstructor(IPlugin.class).newInstance(plugin);
+    }
+
+
+    public Class<?> findClass(String name) throws ClassNotFoundException {
+        return Class.forName(name, true, pluginClassLoader.self());
     }
 
     /**
      * 关闭
      */
     public synchronized void close() throws Exception {
-        if (coreObject != null) coreObject.close();
         if (pluginClassLoader != null) pluginClassLoader.self().close();
+        plugin.getRunServer().getScheduler().shutdown();
         coreObject = null;
         pluginClassLoader = null;
         IOUtil.removeAllFiles(plugin.getTempFolder());
@@ -193,6 +210,7 @@ public class PluginLoader {
         }
     }
 
+    // 获得文件sha256
     private String getSha256(File file) throws Exception {
         try (FileInputStream fis = new FileInputStream(file);
              ByteArrayOutputStream baos = new ByteArrayOutputStream();) {

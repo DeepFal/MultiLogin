@@ -1,112 +1,105 @@
 package moe.caa.multilogin.core.configuration.yggdrasil;
 
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.ToString;
+import moe.caa.multilogin.api.util.ValueUtil;
+import moe.caa.multilogin.core.configuration.ConfException;
 import moe.caa.multilogin.core.configuration.ProxyConfig;
-import org.checkerframework.checker.nullness.qual.Nullable;
-import org.spongepowered.configurate.ConfigurationNode;
+import moe.caa.multilogin.core.configuration.SkinRestorerConfig;
+import moe.caa.multilogin.core.configuration.yggdrasil.hasjoined.HasJoinedConfig;
+import org.spongepowered.configurate.CommentedConfigurationNode;
 import org.spongepowered.configurate.serialize.SerializationException;
-import org.spongepowered.configurate.serialize.TypeSerializer;
 
-import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
+import java.util.UUID;
+import java.util.function.BiFunction;
 
+/**
+ * 表示一个验证服务器配置
+ */
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Getter
 @ToString
 public class YggdrasilServiceConfig {
     private final int id;
     private final String name;
+
     private final HasJoinedConfig hasJoined;
-    private final TransformUUID transformUUID;
+    private final boolean passIp;
+    private final int timeout;
+    private final int retry;
+    private final int retryDelay;
+    private final ProxyConfig proxy;
+
+    private final InitUUID initUUID;
     private final String nameAllowedRegular;
     private final boolean whitelist;
     private final boolean refuseRepeatedLogin;
     private final boolean compulsoryUsername;
     private final SkinRestorerConfig skinRestorer;
 
-    @AllArgsConstructor(access = AccessLevel.PRIVATE)
-    @Getter
-    @ToString
-    public static class HasJoinedConfig {
-        private final String url;
-        private final HttpRequestMethod method;
-        private final boolean passIp;
-        private final String ipContent;
-        private final String postContent;
-        private final int timeout;
-        private final int retry;
-        private final int retryDelay;
-        private final ProxyConfig proxy;
+    public static YggdrasilServiceConfig read(CommentedConfigurationNode node) throws SerializationException, ConfException {
+        int id = node.node("id").getInt();
+        String name = node.node("name").getString("Unnamed");
+
+        HasJoinedConfig hasJoined = HasJoinedConfig.getHasJoinedConfig(node.node("hasJoined"));
+
+        boolean passIp = node.node("passIp").getBoolean(false);
+        int timeout = node.node("timeout").getInt(10000);
+        int retry = node.node("retry").getInt(0);
+        int retryDelay = node.node("retryDelay").getInt(0);
+        ProxyConfig proxy = ProxyConfig.read(node.node("proxy"));
+
+        InitUUID initUUID = node.node("initUUID").get(InitUUID.class, InitUUID.DEFAULT);
+        String nameAllowedRegular = node.node("nameAllowedRegular").getString("^[0-9a-zA-Z_]{3,16}$");
+        boolean whitelist = node.node("whitelist").getBoolean(false);
+        boolean refuseRepeatedLogin = node.node("refuseRepeatedLogin").getBoolean(false);
+        boolean compulsoryUsername = node.node("compulsoryUsername").getBoolean(false);
+        SkinRestorerConfig skinRestorer = SkinRestorerConfig.read(node.node("skinRestorer"));
+
+        return checkValid(
+                new YggdrasilServiceConfig(
+                        id, name, hasJoined,
+                        passIp, timeout, retry, retryDelay, proxy,
+                        initUUID, nameAllowedRegular, whitelist,
+                        refuseRepeatedLogin, compulsoryUsername, skinRestorer
+                )
+        );
     }
 
-    @AllArgsConstructor(access = AccessLevel.PRIVATE)
-    @Getter
-    @ToString
-    public static class SkinRestorerConfig {
-        private final SkinRestorerType restorer;
-        private final SkinRestorerMethod method;
-        private final int timeout;
-        private final int retry;
-        private final int retryDelay;
+    private static YggdrasilServiceConfig checkValid(YggdrasilServiceConfig config) throws ConfException {
+        if (config.id > 127 || config.id < 0)
+            throw new ConfException(String.format(
+                    "Yggdrasil id %d is out of bounds, The value can only be between 0 and 127."
+                    , config.id
+            ));
+        if (config.passIp && ValueUtil.isEmpty(config.hasJoined.getIpContent()))
+            throw new ConfException("PassIp is true, but ipContent is empty.");
+        return config;
     }
 
-    @NoArgsConstructor(access = AccessLevel.PRIVATE)
-    public static class YggdrasilServiceConfigSerializers implements TypeSerializer<YggdrasilServiceConfig> {
-        @Getter
-        private static final YggdrasilServiceConfigSerializers instance = new YggdrasilServiceConfigSerializers();
+    public enum HttpRequestMethod {
+        GET, POST
+    }
 
-        @Override
-        public YggdrasilServiceConfig deserialize(Type type, ConfigurationNode node) throws SerializationException {
-            if (!node.hasChild("id")) throw new SerializationException("id not found.");
-            int id = node.node("id").getInt();
-            if (id < 0 || id > 255) {
-                throw new SerializationException(node.node("id"), int.class, String.format("The ID must be in the range 0 to 255, but the id is %d, which exceeds the value range.", id));
-            }
+    /**
+     * 初始化的UUID生成器
+     */
+    public enum InitUUID {
+        DEFAULT((u, n) -> u),
+        OFFLINE((u, n) -> UUID.nameUUIDFromBytes(("OfflinePlayer:" + n).getBytes(StandardCharsets.UTF_8))),
+        RANDOM((u, n) -> UUID.randomUUID());
 
-            String name = node.node("name").getString("Unnamed");
+        private final BiFunction<UUID, String, UUID> biFunction;
 
-            HasJoinedConfig hasJoined;
-            {
-                final ConfigurationNode hasJoinedNode = node.node("hasJoined");
-                String url = hasJoinedNode.node("url").getString();
-                HttpRequestMethod method = hasJoinedNode.node("method").get(HttpRequestMethod.class, HttpRequestMethod.GET);
-                boolean passIp = hasJoinedNode.node("passIp").getBoolean(true);
-                String ipContent = hasJoinedNode.node("ipContent").getString("&ip={0}");
-                String postContent = hasJoinedNode.node("postContent").getString("{\"username\":\"{0}\", \"serverId\":\"{1}\"}");
-                int timeout = hasJoinedNode.node("timeout").getInt(10000);
-                int retry = hasJoinedNode.node("retry").getInt(0);
-                int retryDelay = hasJoinedNode.node("retryDelay").getInt(0);
-
-                ProxyConfig proxy;
-                {
-                    proxy = node.node("proxy").get(ProxyConfig.class);
-                }
-
-                hasJoined = new HasJoinedConfig(url, method, passIp, ipContent, postContent, timeout, retry, retryDelay, proxy);
-            }
-
-            TransformUUID transformUUID = node.node("transformUUID").get(TransformUUID.class, TransformUUID.DEFAULT);
-            String nameAllowedRegular = node.node("nameAllowedRegular").getString("");
-            boolean whitelist = node.node("whitelist").getBoolean(false);
-            boolean refuseRepeatedLogin = node.node("refuseRepeatedLogin").getBoolean(false);
-            boolean compulsoryUsername = node.node("compulsoryUsername").getBoolean(false);
-
-            SkinRestorerConfig skinRestorer;
-            {
-                final ConfigurationNode skinRestorerNode = node.node("skinRestorer");
-                SkinRestorerType restorer = skinRestorerNode.node("restorer").get(SkinRestorerType.class, SkinRestorerType.OFF);
-                SkinRestorerMethod method = skinRestorerNode.node("method").get(SkinRestorerMethod.class, SkinRestorerMethod.URL);
-                int timeout = skinRestorerNode.node("timeout").getInt(10000);
-                int retry = skinRestorerNode.node("retry").getInt(2);
-                int retryDelay = skinRestorerNode.node("retryDelay").getInt(5000);
-                skinRestorer = new SkinRestorerConfig(restorer, method, timeout, retry, retryDelay);
-            }
-
-            return new YggdrasilServiceConfig(id, name, hasJoined, transformUUID, nameAllowedRegular, whitelist, refuseRepeatedLogin, compulsoryUsername, skinRestorer);
+        InitUUID(BiFunction<UUID, String, UUID> biFunction) {
+            this.biFunction = biFunction;
         }
 
-        @Override
-        public void serialize(Type type, @Nullable YggdrasilServiceConfig obj, ConfigurationNode node) {
-            throw new UnsupportedOperationException();
+        public UUID generateUUID(UUID onlineUUID, String currentUsername) {
+            return biFunction.apply(onlineUUID, currentUsername);
         }
     }
 }

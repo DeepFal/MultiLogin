@@ -12,6 +12,9 @@ import java.net.URLClassLoader;
 import java.util.Collections;
 import java.util.Set;
 
+/**
+ * 可以中途重定向包名的类加载器
+ */
 public class RelocateClassLoader extends URLClassLoader implements IExtURLClassLoader {
     static {
         registerAsParallelCapable();
@@ -62,6 +65,11 @@ public class RelocateClassLoader extends URLClassLoader implements IExtURLClassL
     @Override
     public URLClassLoader self() {
         return this;
+    }
+
+    @Override
+    public Class<?> defineClass(String name, byte[] bytes) {
+        return defineClass(name, bytes, 0, bytes.length);
     }
 
     private class AppendPrefixMapper extends Remapper {

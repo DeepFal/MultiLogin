@@ -2,10 +2,14 @@ package fun.ksnb.multilogin.velocity.impl;
 
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
+import com.velocitypowered.proxy.console.VelocityConsole;
 import moe.caa.multilogin.api.plugin.IPlayer;
 import moe.caa.multilogin.api.plugin.ISender;
 import net.kyori.adventure.text.Component;
 
+/**
+ * Velocity 指令执行者对象
+ */
 public class VelocitySender implements ISender {
     private final CommandSource commandSource;
 
@@ -19,13 +23,20 @@ public class VelocitySender implements ISender {
     }
 
     @Override
+    public boolean isConsole() {
+        return commandSource instanceof VelocityConsole;
+    }
+
+    @Override
     public boolean hasPermission(String permission) {
         return commandSource.hasPermission(permission);
     }
 
     @Override
-    public void sendMessage(String message) {
-        commandSource.sendMessage(Component.text(message));
+    public void sendMessagePL(String message) {
+        for (String s : message.split("\\r?\\n")) {
+            commandSource.sendMessage(Component.text(s));
+        }
     }
 
     @Override

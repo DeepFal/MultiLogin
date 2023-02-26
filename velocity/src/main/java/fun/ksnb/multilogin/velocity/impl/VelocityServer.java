@@ -5,8 +5,12 @@ import com.velocitypowered.proxy.config.PlayerInfoForwarding;
 import com.velocitypowered.proxy.config.VelocityConfiguration;
 import moe.caa.multilogin.api.plugin.BaseScheduler;
 import moe.caa.multilogin.api.plugin.IPlayerManager;
+import moe.caa.multilogin.api.plugin.ISender;
 import moe.caa.multilogin.api.plugin.IServer;
 
+/**
+ * Velocity 服务器对象
+ */
 public class VelocityServer implements IServer {
     private final ProxyServer server;
     private final BaseScheduler scheduler;
@@ -34,11 +38,6 @@ public class VelocityServer implements IServer {
     }
 
     @Override
-    public boolean isWhitelist() {
-        return false;
-    }
-
-    @Override
     public boolean isForwarded() {
         return ((VelocityConfiguration) server.getConfiguration()).getPlayerInfoForwardingMode() != PlayerInfoForwarding.NONE;
     }
@@ -56,5 +55,10 @@ public class VelocityServer implements IServer {
     @Override
     public void shutdown() {
         server.shutdown();
+    }
+
+    @Override
+    public ISender getConsoleSender() {
+        return new VelocitySender(server.getConsoleCommandSource());
     }
 }

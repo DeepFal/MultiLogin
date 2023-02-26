@@ -1,12 +1,17 @@
 package moe.caa.multilogin.core.ohc;
 
+import moe.caa.multilogin.api.logger.LoggerProvider;
 import okhttp3.Interceptor;
 import okhttp3.Request;
 import okhttp3.Response;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
+/**
+ * 延时重试拦截器
+ */
 public class RetryInterceptor implements Interceptor {
     private final int retry;
     private final int delay;
@@ -20,18 +25,24 @@ public class RetryInterceptor implements Interceptor {
     @Override
     public Response intercept(@NotNull Chain chain) throws IOException {
         Request request = chain.request();
-        Response response = chain.proceed(request);
+        Response response;
         int tc = 0;
-        while (!response.isSuccessful() && tc < retry) {
+        while (true) {
             try {
-                Thread.sleep(delay);
+                response = chain.proceed(request);
+                return response;
+            } catch (IOException e) {
+                LoggerProvider.getLogger().debug(tc + " retry failed.", e);
+                if (tc >= retry) throw e;
+            }
+
+            try {
+                TimeUnit.MILLISECONDS.sleep(delay);
             } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
                 throw new InterruptedRetryException(e);
             }
             tc++;
-            response = chain.proceed(request);
+            LoggerProvider.getLogger().debug("--> " + tc + " retry.");
         }
-        return response;
     }
 }

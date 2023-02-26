@@ -1,26 +1,25 @@
 package moe.caa.multilogin.core.auth.yggdrasil;
 
-import moe.caa.multilogin.api.auth.yggdrasil.response.HasJoinedResponse;
+import moe.caa.multilogin.api.auth.GameProfile;
 import moe.caa.multilogin.api.util.Pair;
 import moe.caa.multilogin.api.util.ValueUtil;
-import moe.caa.multilogin.core.configuration.yggdrasil.HttpRequestMethod;
 import moe.caa.multilogin.core.configuration.yggdrasil.YggdrasilServiceConfig;
 import moe.caa.multilogin.core.main.MultiCore;
+import moe.caa.multilogin.core.ohc.LoggingInterceptor;
 import moe.caa.multilogin.core.ohc.RetryInterceptor;
 import moe.caa.multilogin.flows.workflows.BaseFlows;
 import moe.caa.multilogin.flows.workflows.Signal;
 import okhttp3.*;
-import org.checkerframework.checker.units.qual.A;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.Objects;
 
+/**
+ * 一个工作流，进行对 Yggd 的 hasJoined 访问
+ */
 public class YggdrasilAuthenticationFlows extends BaseFlows<HasJoinedContext> {
     private final MultiCore core;
     private final String username;
@@ -36,58 +35,63 @@ public class YggdrasilAuthenticationFlows extends BaseFlows<HasJoinedContext> {
         this.yggdrasilId = yggdrasilId;
     }
 
-    public HasJoinedResponse call() throws Exception {
-        YggdrasilServiceConfig.HasJoinedConfig hasJoinedConfig = core.getPluginConfig().getYggdrasilServiceMap().get(yggdrasilId).getHasJoined();
-        String ipContent = hasJoinedConfig.getIpContent();
-        if (!ValueUtil.isEmpty(ipContent)) {
-            ipContent = ValueUtil.transPapi(ipContent, new Pair<>("ip", ip == null ? "" : ip));
+    // 进行验证
+    public Pair<GameProfile, YggdrasilServiceConfig> call() throws Exception {
+        YggdrasilServiceConfig config = core.getPluginConfig().getIdMap().get(yggdrasilId);
+        String ipContent = "";
+        if (config.isPassIp() && !ValueUtil.isEmpty(ip)) {
+            ipContent = config.getHasJoined().getIpContent();
+            if (!ValueUtil.isEmpty(ipContent)) {
+                ipContent = ValueUtil.transPapi(ipContent, new Pair<>("ip", URLEncoder.encode(ip, StandardCharsets.UTF_8)));
+            }
         }
 
-        String url = ValueUtil.transPapi(hasJoinedConfig.getUrl(),
+        String url = ValueUtil.transPapi(config.getHasJoined().getUrl(),
                 new Pair<>("username", URLEncoder.encode(username, StandardCharsets.UTF_8)),
                 new Pair<>("serverId", URLEncoder.encode(serverId, StandardCharsets.UTF_8)),
-                new Pair<>("ip", URLEncoder.encode(ipContent, StandardCharsets.UTF_8))
+                new Pair<>("ip", ipContent)
         );
 
-        if (hasJoinedConfig.getMethod() == HttpRequestMethod.GET) {
-            return call0(hasJoinedConfig, new Request.Builder()
+        if (config.getHasJoined().getMethod() == YggdrasilServiceConfig.HttpRequestMethod.GET) {
+            return new Pair<>(call0(config, new Request.Builder()
                     .get()
                     .url(url)
-                    .build());
-        } else if (hasJoinedConfig.getMethod() == HttpRequestMethod.POST) {
-            return call0(hasJoinedConfig, new Request.Builder()
-                    .post(RequestBody.create(ValueUtil.transPapi(hasJoinedConfig.getPostContent(),
+                    .build()), config);
+        } else if (config.getHasJoined().getMethod() == YggdrasilServiceConfig.HttpRequestMethod.POST) {
+            return new Pair<>(call0(config, new Request.Builder()
+                    .post(RequestBody.create(ValueUtil.transPapi(config.getHasJoined().getPostContent(),
                             new Pair<>("username", URLEncoder.encode(username, StandardCharsets.UTF_8)),
                             new Pair<>("serverId", URLEncoder.encode(serverId, StandardCharsets.UTF_8)),
-                            new Pair<>("ip", URLEncoder.encode(ipContent, StandardCharsets.UTF_8))).getBytes(StandardCharsets.UTF_8)))
+                            new Pair<>("ip", ipContent)).getBytes(StandardCharsets.UTF_8)))
                     .url(url)
-                    .build());
+                    .build()), config);
         }
         throw new UnsupportedOperationException("HttpRequestMethod");
     }
 
 
-    private HasJoinedResponse call0(YggdrasilServiceConfig.HasJoinedConfig config, Request request) throws IOException {
+    private GameProfile call0(YggdrasilServiceConfig config, Request request) throws IOException {
         OkHttpClient client = new OkHttpClient.Builder()
                 .addInterceptor(new RetryInterceptor(config.getRetry(), config.getRetryDelay()))
+                .addInterceptor(new LoggingInterceptor())
                 .writeTimeout(Duration.ofMillis(config.getTimeout()))
                 .readTimeout(Duration.ofMillis(config.getTimeout()))
                 .connectTimeout(Duration.ofMillis(config.getTimeout()))
-                .callTimeout(Duration.ofMillis(config.getTimeout()))
-                .proxy(new Proxy(config.getProxy().getType(), new InetSocketAddress(config.getProxy().getHostname(), config.getProxy().getPort())))
+                .proxy(config.getProxy().getProxy())
+                .proxyAuthenticator(config.getProxy().getProxyAuthenticator())
                 .build();
         Call call = client.newCall(request);
         try (Response execute = call.execute()) {
-            return core.getGson().fromJson(execute.body().string(), HasJoinedResponse.class);
+            return core.getGson().fromJson(Objects.requireNonNull(execute.body()).string(), GameProfile.class);
         }
     }
 
     @Override
     public Signal run(HasJoinedContext hasJoinedContext) {
         try {
-            HasJoinedResponse response = call();
-            if (response != null && response.getId() != null) {
-                hasJoinedContext.getResponse().set(new Pair<>(response, yggdrasilId));
+            Pair<GameProfile, YggdrasilServiceConfig> response = call();
+            if (response.getValue1() != null && response.getValue1().getId() != null) {
+                hasJoinedContext.getResponse().set(new Pair<>(response.getValue1(), new Pair<>(yggdrasilId, response.getValue2())));
                 return Signal.PASSED;
             }
             return Signal.TERMINATED;

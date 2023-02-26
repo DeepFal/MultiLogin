@@ -1,7 +1,17 @@
+import groovy.json.JsonOutput
+import org.apache.tools.ant.filters.ReplaceTokens
+import java.text.SimpleDateFormat
+
+plugins {
+    id "net.nemerosa.versioning" version "3.0.0" apply false
+}
+
 apply from: './constant.gradle'
 
 allprojects {
     apply plugin: "java"
+    apply plugin: 'net.nemerosa.versioning'
+    version = versioning.info.build
 }
 
 subprojects {
@@ -18,8 +28,8 @@ subprojects {
     }
 
     dependencies {
-        compileOnly group: 'org.projectlombok', name: 'lombok', version: '1.18.22'
-        annotationProcessor group: 'org.projectlombok', name: 'lombok', version: '1.18.22'
+        compileOnly group: 'org.projectlombok', name: 'lombok', version: '1.18.24'
+        annotationProcessor group: 'org.projectlombok', name: 'lombok', version: '1.18.24'
 
         try (def scanner = new Scanner(file.libraries)) {
             while (scanner.hasNextLine()) {
@@ -29,6 +39,57 @@ subprojects {
                 compileOnly group: args[0], name: args[1], version: args[2]
             }
         }
+    }
+
+    processResources {
+        setDuplicatesStrategy(DuplicatesStrategy.EXCLUDE)
+
+        def contributors = new HashSet<String>()
+        try (def scanner = new Scanner(file.contributors)) {
+            while (scanner.hasNextLine()) {
+                def line = scanner.nextLine()
+                if (line.trim().length() == 0 || (line.charAt(0) as String) == '#') continue
+                contributors.add(line)
+            }
+        }
+
+        def ver;
+        def env = System.getProperty("env", "AUTO").toLowerCase()
+        if (env == "final") {
+            ver = (project.plugin_version as String)
+        } else {
+            ver = "Build_" + version
+        }
+
+        filter ReplaceTokens, tokens: [
+                "contributors_json": JsonOutput.toJson(contributors),
+                "contributors"     : contributors.join(", "),
+                "version"          : ver,
+                "build_type"       : env,
+                "build_timestamp"  : System.currentTimeMillis() as String
+        ]
+    }
+
+    jar {
+        manifest {
+            attributes(
+                    'Built-By'       : System.properties['user.name'],
+                    'Build-Timestamp': new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").format(new Date()),
+                    'Build-Revision' : versioning.info.commit,
+                    'Created-By'     : "Gradle ${gradle.gradleVersion}",
+                    'Build-Jdk'      : "${System.properties['java.version']} (${System.properties['java.vendor']} ${System.properties['java.vm.version']})",
+                    'Build-OS'       : "${System.properties['os.name']} ${System.properties['os.arch']} ${System.properties['os.version']}"
+            )
+        }
+    }
+
+    tasks.withType(JavaCompile) {
+        options.encoding = "UTF-8"
+        file.encoding = "UTF-8"
+    }
+
+    compileJava {
+        sourceCompatibility = targetCompatibility = JavaVersion.VERSION_11
     }
 }
 

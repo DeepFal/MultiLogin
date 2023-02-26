@@ -1,23 +1,24 @@
 package moe.caa.multilogin.core.language;
 
+import moe.caa.multilogin.api.language.LanguageAPI;
 import moe.caa.multilogin.api.logger.LoggerProvider;
+import moe.caa.multilogin.api.util.IOUtil;
 import moe.caa.multilogin.api.util.Pair;
 import moe.caa.multilogin.api.util.ValueUtil;
 import moe.caa.multilogin.core.main.MultiCore;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 
 /**
  * 代表可读文本处理程序
  */
-public class LanguageHandler {
+public class LanguageHandler implements LanguageAPI {
     private final MultiCore core;
-    private Properties inside;
-    private Properties outside;
+    private Properties language;
 
     public LanguageHandler(MultiCore core) {
         this.core = core;
@@ -26,47 +27,47 @@ public class LanguageHandler {
     /**
      * 初始化这个可读文本处理程序
      */
-    public void init(String fileName) throws IOException {
-        inside = new Properties();
-        try (InputStream is = Objects.requireNonNull(getClass().getResourceAsStream("/" + fileName))) {
-            inside.load(new InputStreamReader(is, StandardCharsets.UTF_8));
-        }
-        reloadOutside(fileName);
+    public void init() throws IOException {
+        reload();
     }
 
     /**
      * 重新加载外置语言仓库
      */
-    public void reloadOutside(String fileName) {
-        var outsideFile = new File(core.getPlugin().getDataFolder(), fileName);
-        if (outsideFile.exists()) {
-            outside = new Properties();
-            try {
-                outside.load(new InputStreamReader(new FileInputStream(outsideFile), StandardCharsets.UTF_8));
-            } catch (IOException e) {
-                LoggerProvider.getLogger().error(String.format("Unable to load outside message file. (%s)", outsideFile.getAbsolutePath()), e);
+    public final String getMessage(String node, Pair<?, ?>... pairs) {
+        return ValueUtil.transPapi(language.getProperty(node), pairs);
+    }
+
+    public void reload() throws IOException {
+        Properties tmp = new Properties();
+        // 加载文件
+        final File messagePropertiesFile = new File(core.getPlugin().getDataFolder(), "message.properties");
+        if (!messagePropertiesFile.exists()) {
+            try (OutputStream outputStream = new FileOutputStream(messagePropertiesFile);
+                 InputStream resourceAsStream = Objects.requireNonNull(getClass().getResourceAsStream("/message.properties"))
+            ) {
+                IOUtil.copy(resourceAsStream, outputStream);
             }
-        } else {
-            outside = null;
+            LoggerProvider.getLogger().info("Extract: message.properties");
         }
-    }
 
-    /**
-     * 通过 节点 和 参数 构建这个可读文本字符串对象
-     *
-     * @param node 节点
-     * @param papi 占位参数
-     * @return 可读文本字符串对象
-     */
-    public String getMessage(String node, Pair<String, Object>... pairs) {
-        if (outside != null && outside.containsKey(node)) {
-            return ValueUtil.transPapi(outside.getProperty(node), pairs);
-        } else {
-            return ValueUtil.transPapi(inside.getProperty(node), pairs);
+        // 加载文件内容
+        try (InputStream inputStream = new FileInputStream(messagePropertiesFile);) {
+            tmp.load(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
         }
-    }
 
-    public String getMessage(String node) {
-        return getMessage(node, Collections.emptyMap());
+        // 补全内容
+        try (InputStream resourceAsStream = Objects.requireNonNull(getClass().getResourceAsStream("/message.properties"));
+             InputStreamReader isr = new InputStreamReader(resourceAsStream, StandardCharsets.UTF_8);
+        ) {
+            Properties inside = new Properties();
+            inside.load(isr);
+            for (Map.Entry<Object, Object> entry : inside.entrySet()) {
+                if (tmp.containsKey(entry.getKey())) continue;
+                tmp.setProperty(entry.getKey().toString(), entry.getValue().toString());
+                LoggerProvider.getLogger().warn("Missing message from node " + entry.getKey().toString());
+            }
+        }
+        language = tmp;
     }
 }

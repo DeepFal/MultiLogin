@@ -6,7 +6,10 @@ import moe.caa.multilogin.core.database.SQLManager;
 
 import java.sql.*;
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
 
 /**
  * 玩家数据表
@@ -15,6 +18,7 @@ public class UserDataTable {
     private static final String fieldOnlineUUID = "online_uuid";
     private static final String fieldYggdrasilId = "yggdrasil_id";
     private static final String fieldInGameProfileUuid = "in_game_profile_uuid";
+    private static final String fieldWhitelist = "whitelist";
     private final SQLManager sqlManager;
     private final String tableName;
 
@@ -27,10 +31,11 @@ public class UserDataTable {
         String sql = MessageFormat.format(
                 "CREATE TABLE IF NOT EXISTS {0} ( " +
                         "{1} BINARY(16) NOT NULL, " +
-                        "{2} TINYINT NOT NULL, " +
+                        "{2} BINARY(1) NOT NULL, " +
                         "{3} BINARY(16) DEFAULT NULL, " +
+                        "{4} BOOL DEFAULT FALSE, " +
                         "PRIMARY KEY ( {1}, {2} ))"
-                , tableName, fieldOnlineUUID, fieldYggdrasilId, fieldInGameProfileUuid);
+                , tableName, fieldOnlineUUID, fieldYggdrasilId, fieldInGameProfileUuid, fieldWhitelist);
         try (Connection connection = sqlManager.getPool().getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
             preparedStatement.executeUpdate();
@@ -53,42 +58,16 @@ public class UserDataTable {
              PreparedStatement statement = connection.prepareStatement(sql)
         ) {
             statement.setBytes(1, ValueUtil.uuidToBytes(onlineUUID));
-            statement.setInt(2, yggdrasilId);
+            statement.setBytes(2, new byte[]{(byte) yggdrasilId});
             try (ResultSet resultSet = statement.executeQuery()) {
                 if (resultSet.next()) {
-                    return ValueUtil.bytesToUuid(resultSet.getBytes(1));
+                    byte[] bytes = resultSet.getBytes(1);
+                    if (bytes == null) return null;
+                    return ValueUtil.bytesToUuid(bytes);
                 }
             }
         }
         return null;
-    }
-
-    /**
-     * 从数据库中检索用户在线信息
-     *
-     * @param inGameUUID 用户游戏内 UUID
-     * @return 检索到的用户在线信息
-     */
-    public List<Pair<UUID, Integer>> getOnlineInfo(UUID inGameUUID) throws SQLException {
-        List<Pair<UUID, Integer>> result = new ArrayList<>();
-        String sql = String.format(
-                "SELECT %s, %s FROM %s WHERE %s = ?"
-                , fieldOnlineUUID, fieldYggdrasilId, tableName, fieldInGameProfileUuid
-        );
-        try (Connection connection = sqlManager.getPool().getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)
-        ) {
-            statement.setBytes(1, ValueUtil.uuidToBytes(inGameUUID));
-            try (ResultSet resultSet = statement.executeQuery()) {
-                if (resultSet.next()) {
-                    result.add(new Pair<>(
-                            ValueUtil.bytesToUuid(resultSet.getBytes(1)),
-                            resultSet.getInt(2))
-                    );
-                }
-            }
-        }
-        return Collections.unmodifiableList(result);
     }
 
     /**
@@ -108,8 +87,8 @@ public class UserDataTable {
         ) {
             statement.setBytes(1, ValueUtil.uuidToBytes(inGameUUID));
             try (ResultSet resultSet = statement.executeQuery()) {
-                if (resultSet.next()) {
-                    result.add(resultSet.getInt(2));
+                while (resultSet.next()) {
+                    result.add(((int) resultSet.getBytes(1)[0]));
                 }
             }
         }
@@ -117,25 +96,73 @@ public class UserDataTable {
     }
 
     /**
-     * 设置在线用户的游戏内 UUID
+     * 返回档案集合
      *
-     * @param onlineUUID  用户在线 UUID
-     * @param yggdrasilId 用户在线 UUID 提供的验证服务器 ID
-     * @param inGameUUID  新的用户在游戏内的 UUID
-     * @return 数据操作量
+     * @param inGameUUID 游戏内 UUID
      */
-    public int setInGameUUID(UUID onlineUUID, int yggdrasilId, UUID inGameUUID) throws SQLException {
+    public Set<Pair<UUID, Integer>> getOnlineProfiles(UUID inGameUUID) throws SQLException {
+        Set<Pair<UUID, Integer>> result = new HashSet<>();
         String sql = String.format(
-                "UPDATE %s SET %s = ? WHERE %s = ? AND %s = ?"
-                , tableName, fieldInGameProfileUuid, fieldOnlineUUID, fieldYggdrasilId
+                "SELECT %s, %s FROM %s WHERE %s = ?"
+                , fieldOnlineUUID, fieldYggdrasilId, tableName, fieldInGameProfileUuid
         );
         try (Connection connection = sqlManager.getPool().getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)
         ) {
             statement.setBytes(1, ValueUtil.uuidToBytes(inGameUUID));
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    result.add(new Pair<>(
+                            ValueUtil.bytesToUuid(resultSet.getBytes(1)),
+                            ((int) resultSet.getBytes(2)[0])
+                    ));
+                }
+            }
+        }
+        return Collections.unmodifiableSet(result);
+    }
+
+    /**
+     * 设置游戏内 UUID
+     *
+     * @param onlineUUID    在线 UUID
+     * @param yggdrasilId   Yggdrasil ID
+     * @param newInGameUUID 新的游戏内 UUID
+     */
+    public int setInGameUUID(UUID onlineUUID, int yggdrasilId, UUID newInGameUUID) throws SQLException {
+        String sql = String.format(
+                "UPDATE %s SET %s = ? WHERE %s = ? AND %s = ? LIMIT 1"
+                , tableName, fieldInGameProfileUuid, fieldOnlineUUID, fieldYggdrasilId
+        );
+        try (Connection connection = sqlManager.getPool().getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)
+        ) {
+            statement.setBytes(1, ValueUtil.uuidToBytes(newInGameUUID));
             statement.setBytes(2, ValueUtil.uuidToBytes(onlineUUID));
-            statement.setInt(3, yggdrasilId);
+            statement.setBytes(3, new byte[]{(byte) yggdrasilId});
             return statement.executeUpdate();
+        }
+    }
+
+    /**
+     * 查询数据是否存在
+     *
+     * @param onlineUUID  在线UUID
+     * @param yggdrasilId Yggdrasil Id
+     */
+    public boolean dataExists(UUID onlineUUID, int yggdrasilId) throws SQLException {
+        String sql = String.format(
+                "SELECT 1 FROM %s WHERE %s = ? AND %s = ? LIMIT 1"
+                , tableName, fieldOnlineUUID, fieldYggdrasilId
+        );
+        try (Connection connection = sqlManager.getPool().getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)
+        ) {
+            statement.setBytes(1, ValueUtil.uuidToBytes(onlineUUID));
+            statement.setBytes(2, new byte[]{(byte) yggdrasilId});
+            try (ResultSet resultSet = statement.executeQuery()) {
+                return resultSet.next();
+            }
         }
     }
 
@@ -156,34 +183,112 @@ public class UserDataTable {
              PreparedStatement statement = connection.prepareStatement(sql)
         ) {
             statement.setBytes(1, ValueUtil.uuidToBytes(onlineUUID));
-            statement.setInt(2, yggdrasilId);
+            statement.setBytes(2, new byte[]{(byte) yggdrasilId});
             if (inGameUUID == null) {
                 statement.setNull(3, Types.BINARY);
             } else {
-                statement.setBytes(3, ValueUtil.uuidToBytes(onlineUUID));
+                statement.setBytes(3, ValueUtil.uuidToBytes(inGameUUID));
             }
             return statement.executeUpdate();
         }
     }
 
     /**
-     * 检查用户数据是否存在
+     * 设置白名单
      *
-     * @param onlineUUID  用户在线 UUID
-     * @param yggdrasilId 用户在线 UUID 提供的验证服务器 ID
-     * @return 数据量
+     * @param onlineUUID  在线 UUID
+     * @param yggdrasilId Yggdrasil Id
+     * @param whitelist   新的白名单
      */
-    public int userDataExists(UUID onlineUUID, int yggdrasilId) throws SQLException {
+    public void setWhitelist(UUID onlineUUID, int yggdrasilId, boolean whitelist) throws SQLException {
         String sql = String.format(
-                "SELECT COUNT(%s) FROM %s WHERE %s = ? AND %s = ?"
-                , fieldOnlineUUID, tableName, fieldOnlineUUID, fieldYggdrasilId
+                "UPDATE %s SET %s = ? WHERE %s = ? AND %s = ? LIMIT 1"
+                , tableName, fieldWhitelist, fieldOnlineUUID, fieldYggdrasilId
+        );
+        try (Connection connection = sqlManager.getPool().getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)
+        ) {
+            statement.setBoolean(1, whitelist);
+            statement.setBytes(2, ValueUtil.uuidToBytes(onlineUUID));
+            statement.setBytes(3, new byte[]{(byte) yggdrasilId});
+            statement.executeUpdate();
+        }
+    }
+
+    /**
+     * 查询白名单
+     */
+    public boolean hasWhitelist(UUID onlineUUID, int yggdrasilId) throws SQLException {
+        String sql = String.format(
+                "SELECT %s FROM %s WHERE %s = ? AND %s = ? LIMIT 1"
+                , fieldWhitelist, tableName, fieldOnlineUUID, fieldYggdrasilId
         );
         try (Connection connection = sqlManager.getPool().getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)
         ) {
             statement.setBytes(1, ValueUtil.uuidToBytes(onlineUUID));
-            statement.setInt(2, yggdrasilId);
-            return statement.executeUpdate();
+            statement.setBytes(2, new byte[]{(byte) yggdrasilId});
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getBoolean(1);
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 查询白名单
+     */
+    public boolean hasWhitelist(UUID inGameUUID) throws SQLException {
+        String sql = String.format(
+                "SELECT %s FROM %s WHERE %s = ? LIMIT 1"
+                , fieldWhitelist, tableName, fieldInGameProfileUuid
+        );
+        try (Connection connection = sqlManager.getPool().getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)
+        ) {
+            statement.setBytes(1, ValueUtil.uuidToBytes(inGameUUID));
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getBoolean(1);
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 设置白名单
+     */
+    public void setWhitelist(UUID inGameUUID, boolean whitelist) throws SQLException {
+        String sql = String.format(
+                "UPDATE %s SET %s = ? WHERE %s = ?LIMIT 1"
+                , tableName, fieldWhitelist, fieldInGameProfileUuid
+        );
+        try (Connection connection = sqlManager.getPool().getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)
+        ) {
+            statement.setBoolean(1, whitelist);
+            statement.setBytes(2, ValueUtil.uuidToBytes(inGameUUID));
+            statement.executeUpdate();
+        }
+    }
+
+    /**
+     * 删除数据
+     */
+    public void delete(UUID onlineUUID, int yggdrasilId) throws SQLException {
+        String sql = String.format(
+                "DELETE FROM %s WHERE %s = ? AND %s = ? LIMIT 1"
+                , tableName, fieldOnlineUUID, fieldYggdrasilId
+        );
+        try (Connection connection = sqlManager.getPool().getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)
+        ) {
+            statement.setBytes(1, ValueUtil.uuidToBytes(onlineUUID));
+            statement.setBytes(2, new byte[]{(byte) yggdrasilId});
+            statement.executeUpdate();
         }
     }
 }

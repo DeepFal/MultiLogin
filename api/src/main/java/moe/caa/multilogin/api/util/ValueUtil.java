@@ -2,9 +2,17 @@ package moe.caa.multilogin.api.util;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Collection;
 import java.util.List;
+import java.util.StringJoiner;
 import java.util.UUID;
 
+/**
+ * 值操作工具
+ */
 public class ValueUtil {
     /**
      * UUID 转 bytes
@@ -63,8 +71,7 @@ public class ValueUtil {
         return str == null || str.length() == 0;
     }
 
-    @SafeVarargs
-    public static String transPapi(String s, Pair<String, Object>... pairs) {
+    public static String transPapi(String s, Pair<?, ?>... pairs) {
         for (int i = 0; i < pairs.length; i++) {
             s = s.replace("{" + pairs[i].getValue1() + "}", pairs[i].getValue2().toString());
             s = s.replace("{" + i + "}", pairs[i].getValue2().toString());
@@ -72,11 +79,38 @@ public class ValueUtil {
         return s;
     }
 
-    public static String transPapi(String s, List<Pair<String, Object>> pairs) {
+    /**
+     * 替换变量
+     */
+    public static String transPapi(String s, List<Pair<?, ?>> pairs) {
         for (int i = 0; i < pairs.size(); i++) {
             s = s.replace("{" + pairs.get(i).getValue1() + "}", pairs.get(i).getValue2().toString());
             s = s.replace("{" + i + "}", pairs.get(i).getValue2().toString());
         }
         return s;
+    }
+
+    /**
+     * 字符串加入
+     */
+    public static String join(CharSequence delimiter, CharSequence lastDelimiter, Object... elements) {
+        if (elements.length == 0) return "";
+        if (elements.length == 1) return elements[0].toString();
+        StringJoiner joiner = new StringJoiner(delimiter);
+        for (int i = 0; i < elements.length - 1; i++) {
+            joiner.add(elements[i].toString());
+        }
+        return joiner.toString() + lastDelimiter + elements[elements.length - 1];
+    }
+
+    public static String join(CharSequence delimiter, CharSequence lastDelimiter, Collection<? extends Object> elements) {
+        return join(delimiter, lastDelimiter, elements.toArray(new Object[0]));
+    }
+
+    /**
+     * 返回字符串 sha256
+     */
+    public static byte[] sha256(String str) throws NoSuchAlgorithmException {
+        return MessageDigest.getInstance("SHA-256").digest(str.getBytes(StandardCharsets.UTF_8));
     }
 }
